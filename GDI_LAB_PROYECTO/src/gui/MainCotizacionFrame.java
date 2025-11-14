@@ -5,7 +5,10 @@ import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
 import dataBase.DatabaseConnection;
+import dataBase.CotizacionDB; // Asegurar importación para DetalleCotizacion
+import java.math.BigDecimal; // IMPORTACIÓN CLAVE
 import javax.swing.table.DefaultTableModel;
+import java.util.List;
 
 public class MainCotizacionFrame extends JFrame {
     // Paneles principales
