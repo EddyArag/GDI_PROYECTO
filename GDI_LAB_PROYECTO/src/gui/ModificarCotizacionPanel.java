@@ -5,6 +5,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.*;
 import java.util.ArrayList;
+import java.math.BigDecimal;
 import dataBase.*;
 
 public class ModificarCotizacionPanel extends JPanel {
@@ -148,23 +149,25 @@ public class ModificarCotizacionPanel extends JPanel {
             return;
         }
         int idCli = Integer.parseInt(seleccionado.split(" - ")[0]);
-        String cond = txtCond.getText();
-        String tent = txtTentativa.getText();
+        String cond = txtCond.getText().isEmpty() ? null : txtCond.getText();
+        String tent = txtTentativa.getText().isEmpty() ? null : txtTentativa.getText();
         String voferStr = txtValidez.getText().trim();
-        Date vofer;
-        try {
-            vofer = Date.valueOf(voferStr);
-        } catch (IllegalArgumentException ex) {
-            JOptionPane.showMessageDialog(this, "Formato de fecha incorrecto. Use yyyy-MM-dd.", "Error de Fecha",
-                    JOptionPane.ERROR_MESSAGE);
-            return;
+        Date vofer = null;
+        if (!voferStr.isEmpty()) {
+            try {
+                vofer = Date.valueOf(voferStr);
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(this, "Formato de fecha incorrecto. Use yyyy-MM-dd.", "Error de Fecha",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
         }
-        double desct = 0.0; // Puedes agregar campo si lo necesitas
+        BigDecimal desct = BigDecimal.valueOf(0.0); // Usa BigDecimal en vez de double
 
         try {
             CotizacionDB.modificarCabeceraCotizacion(ncot, desct, cond, tent, vofer);
             // Elimina todos los detalles y vuelve a agregarlos
-            try (Connection conn = DatabaseConnection.getConnection();
+            try (Connection conn = dataBase.DatabaseConnection.getConnection();
                     PreparedStatement ps = conn.prepareStatement("DELETE FROM Cotizacion_Detalle WHERE NCOT = ?")) {
                 ps.setString(1, ncot);
                 ps.executeUpdate();
@@ -172,7 +175,13 @@ public class ModificarCotizacionPanel extends JPanel {
             for (int i = 0; i < modeloDetalle.getRowCount(); i++) {
                 String idServ = modeloDetalle.getValueAt(i, 0).toString();
                 int cantidad = Integer.parseInt(modeloDetalle.getValueAt(i, 2).toString());
-                DetalleCotizacionDB.agregarDetalle(ncot, idServ, cantidad);
+                try (Connection conn = dataBase.DatabaseConnection.getConnection();
+                        CallableStatement cs = conn.prepareCall("CALL SP_AGREGAR_DETALLE(?, ?, ?)")) {
+                    cs.setString(1, String.format("%-10s", ncot));
+                    cs.setString(2, String.format("%-4s", idServ));
+                    cs.setInt(3, cantidad);
+                    cs.execute();
+                }
             }
             JOptionPane.showMessageDialog(this, "Cotización modificada correctamente.");
         } catch (SQLException ex) {

@@ -9,7 +9,7 @@ import dataBase.ProductoDB;
 public class ProductosGestionPanel extends JPanel {
     private JTable tablaProductos;
     private DefaultTableModel modeloProductos;
-    private JButton btnAgregar, btnModificar, btnEliminar, btnReactivar;
+    private JButton btnAgregar, btnModificar, btnEliminar, btnReactivar, btnActualizar;
 
     public ProductosGestionPanel() {
         setLayout(new BorderLayout());
@@ -22,12 +22,14 @@ public class ProductosGestionPanel extends JPanel {
         btnModificar = new JButton("Modificar");
         btnEliminar = new JButton("Eliminar");
         btnReactivar = new JButton("Reactivar");
+        btnActualizar = new JButton("Actualizar");
 
         JPanel panelBotones = new JPanel();
         panelBotones.add(btnAgregar);
         panelBotones.add(btnModificar);
         panelBotones.add(btnEliminar);
         panelBotones.add(btnReactivar);
+        panelBotones.add(btnActualizar);
 
         add(new JScrollPane(tablaProductos), BorderLayout.CENTER);
         add(panelBotones, BorderLayout.SOUTH);
@@ -36,12 +38,14 @@ public class ProductosGestionPanel extends JPanel {
         btnModificar.addActionListener(e -> modificarProducto());
         btnEliminar.addActionListener(e -> eliminarProducto());
         btnReactivar.addActionListener(e -> reactivarProducto());
+        btnActualizar.addActionListener(e -> cargarProductos());
     }
 
     private void cargarProductos() {
         modeloProductos.setRowCount(0);
         try {
-            for (String[] prod : ProductoDB.listarProductos()) {
+            // Cambia a la función de desactivados si es ventana de reactivación
+            for (String[] prod : ProductoDB.listarProductosDesactivados()) {
                 modeloProductos.addRow(prod);
             }
         } catch (SQLException ex) {

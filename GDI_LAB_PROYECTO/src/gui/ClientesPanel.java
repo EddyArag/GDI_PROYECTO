@@ -9,7 +9,7 @@ import dataBase.ClienteDB;
 public class ClientesPanel extends JPanel {
     private JTable tablaClientes;
     private DefaultTableModel modeloClientes;
-    private JButton btnAgregar, btnModificar, btnEliminar, btnReactivar;
+    private JButton btnAgregar, btnModificar, btnEliminar, btnReactivar, btnActualizar;
 
     public ClientesPanel() {
         setLayout(new BorderLayout());
@@ -22,12 +22,14 @@ public class ClientesPanel extends JPanel {
         btnModificar = new JButton("Modificar");
         btnEliminar = new JButton("Eliminar");
         btnReactivar = new JButton("Reactivar");
+        btnActualizar = new JButton("Actualizar");
 
         JPanel panelBotones = new JPanel();
         panelBotones.add(btnAgregar);
         panelBotones.add(btnModificar);
         panelBotones.add(btnEliminar);
         panelBotones.add(btnReactivar);
+        panelBotones.add(btnActualizar);
 
         add(new JScrollPane(tablaClientes), BorderLayout.CENTER);
         add(panelBotones, BorderLayout.SOUTH);
@@ -36,12 +38,14 @@ public class ClientesPanel extends JPanel {
         btnModificar.addActionListener(e -> modificarCliente());
         btnEliminar.addActionListener(e -> eliminarCliente());
         btnReactivar.addActionListener(e -> reactivarCliente());
+        btnActualizar.addActionListener(e -> cargarClientes());
     }
 
     private void cargarClientes() {
         modeloClientes.setRowCount(0);
         try {
-            for (String[] cli : ClienteDB.listarClientes()) {
+            // Cambia a la función de desactivados si es ventana de reactivación
+            for (String[] cli : ClienteDB.listarClientesDesactivados()) {
                 modeloClientes.addRow(cli);
             }
         } catch (SQLException ex) {

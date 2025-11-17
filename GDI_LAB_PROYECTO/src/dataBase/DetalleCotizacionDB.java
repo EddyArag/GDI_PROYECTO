@@ -30,9 +30,9 @@ public class DetalleCotizacionDB {
     // No modificar, solo usar para agregar detalles a cotizaciones reales.
     public static void agregarDetalle(String ncot, String idServ, int cant) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
-                CallableStatement cs = conn.prepareCall("{ call SP_AGREGAR_DETALLE(?, ?, ?) }")) {
-            cs.setString(1, ncot);
-            cs.setString(2, idServ);
+                CallableStatement cs = conn.prepareCall("CALL SP_AGREGAR_DETALLE(?, ?, ?)")) {
+            cs.setString(1, String.format("%-10s", ncot));
+            cs.setString(2, String.format("%-4s", idServ));
             cs.setInt(3, cant);
             cs.execute();
         }
@@ -40,10 +40,10 @@ public class DetalleCotizacionDB {
 
     public static void modificarDetalle(int idDet, String ncot, String idServ, int cant) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
-                CallableStatement cs = conn.prepareCall("{ call SP_MODIFICAR_DETALLE(?, ?, ?, ?) }")) {
+                CallableStatement cs = conn.prepareCall("CALL SP_MODIFICAR_DETALLE(?, ?, ?, ?)")) {
             cs.setInt(1, idDet);
-            cs.setString(2, ncot);
-            cs.setString(3, idServ);
+            cs.setString(2, String.format("%-10s", ncot));
+            cs.setString(3, String.format("%-4s", idServ));
             cs.setInt(4, cant);
             cs.execute();
         }
@@ -51,9 +51,9 @@ public class DetalleCotizacionDB {
 
     public static void eliminarDetalle(int idDet, String ncot) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
-                CallableStatement cs = conn.prepareCall("{ call SP_ELIMINAR_DETALLE(?, ?) }")) {
+                CallableStatement cs = conn.prepareCall("CALL SP_ELIMINAR_DETALLE(?, ?)")) {
             cs.setInt(1, idDet);
-            cs.setString(2, ncot);
+            cs.setString(2, String.format("%-10s", ncot));
             cs.execute();
         }
     }

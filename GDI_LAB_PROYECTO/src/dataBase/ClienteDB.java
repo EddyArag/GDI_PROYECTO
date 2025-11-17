@@ -57,7 +57,7 @@ public class ClienteDB {
 
     public static void eliminarLogicoCliente(int id) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
-                CallableStatement cs = conn.prepareCall("{ call SP_ELIMINAR_LOGICO_CLIENTE(?) }")) {
+                CallableStatement cs = conn.prepareCall("CALL SP_ELIMINAR_LOGICO_CLIENTE(?)")) {
             cs.setInt(1, id);
             cs.execute();
         }
@@ -65,7 +65,7 @@ public class ClienteDB {
 
     public static void reactivarCliente(int id) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
-                CallableStatement cs = conn.prepareCall("{ call SP_REACTIVAR_CLIENTE(?) }")) {
+                CallableStatement cs = conn.prepareCall("CALL SP_REACTIVAR_CLIENTE(?)")) {
             cs.setInt(1, id);
             cs.execute();
         }
@@ -103,5 +103,23 @@ public class ClienteDB {
             }
         }
         return telefonos;
+    }
+
+    public static List<String[]> listarClientesDesactivados() throws SQLException {
+        List<String[]> clientes = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection();
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(
+                        "SELECT id_cli, nombre_completo, ruc, observaciones FROM FN_LISTAR_CLIENTES_DESACTIVADOS()")) {
+            while (rs.next()) {
+                clientes.add(new String[] {
+                        String.valueOf(rs.getInt("id_cli")),
+                        rs.getString("nombre_completo"),
+                        rs.getString("ruc"),
+                        rs.getString("observaciones")
+                });
+            }
+        }
+        return clientes;
     }
 }

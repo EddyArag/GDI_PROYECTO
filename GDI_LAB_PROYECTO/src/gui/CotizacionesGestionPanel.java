@@ -9,7 +9,7 @@ import dataBase.CotizacionDB;
 public class CotizacionesGestionPanel extends JPanel {
     private JTable tablaCotizaciones;
     private DefaultTableModel modeloCotizaciones;
-    private JButton btnEliminar, btnReactivar, btnModificar;
+    private JButton btnEliminar, btnReactivar, btnModificar, btnActualizar;
 
     public CotizacionesGestionPanel() {
         setLayout(new BorderLayout());
@@ -21,11 +21,13 @@ public class CotizacionesGestionPanel extends JPanel {
         btnEliminar = new JButton("Eliminar");
         btnReactivar = new JButton("Reactivar");
         btnModificar = new JButton("Modificar");
+        btnActualizar = new JButton("Actualizar");
 
         JPanel panelBotones = new JPanel();
         panelBotones.add(btnEliminar);
         panelBotones.add(btnReactivar);
         panelBotones.add(btnModificar);
+        panelBotones.add(btnActualizar);
 
         add(new JScrollPane(tablaCotizaciones), BorderLayout.CENTER);
         add(panelBotones, BorderLayout.SOUTH);
@@ -33,12 +35,14 @@ public class CotizacionesGestionPanel extends JPanel {
         btnEliminar.addActionListener(e -> eliminarCotizacion());
         btnReactivar.addActionListener(e -> reactivarCotizacion());
         btnModificar.addActionListener(e -> modificarCotizacion());
+        btnActualizar.addActionListener(e -> cargarCotizaciones());
     }
 
     private void cargarCotizaciones() {
         modeloCotizaciones.setRowCount(0);
         try {
-            for (String[] cot : CotizacionDB.listarCotizaciones()) {
+            // Cambia a la función de desactivados si es ventana de reactivación
+            for (String[] cot : CotizacionDB.listarCotizacionesDesactivadas()) {
                 modeloCotizaciones.addRow(cot);
             }
         } catch (SQLException ex) {

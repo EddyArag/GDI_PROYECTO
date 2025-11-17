@@ -24,6 +24,7 @@ public class MainCotizacionFrame extends JFrame {
 
     // Componentes de Cotización
     private JTextField txtFecha, txtCond, txtGarantia, txtTentativa, txtValidez;
+    private JTextField txtDescuento; // Campo para descuento
 
     // Componentes de Detalle
     private JTable tablaDetalle;
@@ -32,6 +33,7 @@ public class MainCotizacionFrame extends JFrame {
 
     // Resumen de costos
     private JLabel lblSubtotal, lblDescuento, lblIGV, lblTotal;
+    private JLabel lblLogo; // Logo empresa
 
     // Paneles de gestión
     private JPanel panelGestionClientes;
@@ -47,6 +49,14 @@ public class MainCotizacionFrame extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
+        // Logo empresa
+        lblLogo = new JLabel();
+        lblLogo.setPreferredSize(new Dimension(120, 80));
+        cargarLogoEmpresa();
+
+        JPanel panelLogo = new JPanel(new BorderLayout());
+        panelLogo.add(lblLogo, BorderLayout.WEST);
+
         // Inicializar paneles
         panelCliente = crearPanelCliente();
         panelCotizacion = crearPanelCotizacion();
@@ -61,12 +71,16 @@ public class MainCotizacionFrame extends JFrame {
 
         // Estructura principal
         JPanel panelCentral = new JPanel(new BorderLayout());
-        panelCentral.add(panelCliente, BorderLayout.NORTH);
-        panelCentral.add(panelCotizacion, BorderLayout.CENTER);
-        panelCentral.add(panelDetalle, BorderLayout.SOUTH);
+        panelCentral.add(panelLogo, BorderLayout.NORTH);
+        panelCentral.add(panelCliente, BorderLayout.CENTER);
+        panelCentral.add(panelCotizacion, BorderLayout.SOUTH);
+
+        JPanel panelMain = new JPanel(new BorderLayout());
+        panelMain.add(panelCentral, BorderLayout.NORTH);
+        panelMain.add(panelDetalle, BorderLayout.CENTER);
 
         add(panelMenuLateral, BorderLayout.WEST);
-        add(panelCentral, BorderLayout.CENTER);
+        add(panelMain, BorderLayout.CENTER);
         add(panelResumen, BorderLayout.EAST);
 
         cargarClientes();
@@ -79,6 +93,23 @@ public class MainCotizacionFrame extends JFrame {
         btnClientes.addActionListener(e -> new ClientesFrame().setVisible(true));
         btnProductos.addActionListener(e -> mostrarPanelGestion(panelGestionProductos));
         btnCotizaciones.addActionListener(e -> mostrarPanelGestion(panelGestionCotizaciones));
+    }
+
+    private void cargarLogoEmpresa() {
+        try (Connection conn = DatabaseConnection.getConnection();
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT logo FROM Empresa LIMIT 1")) {
+            if (rs.next()) {
+                byte[] logoBytes = rs.getBytes("logo");
+                if (logoBytes != null && logoBytes.length > 0) {
+                    ImageIcon icon = new ImageIcon(logoBytes);
+                    Image img = icon.getImage().getScaledInstance(120, 80, Image.SCALE_SMOOTH);
+                    lblLogo.setIcon(new ImageIcon(img));
+                }
+            }
+        } catch (SQLException ex) {
+            lblLogo.setText("Sin logo");
+        }
     }
 
     private void mostrarPanelGestion(JPanel panelGestion) {
@@ -127,7 +158,7 @@ public class MainCotizacionFrame extends JFrame {
     }
 
     private JPanel crearPanelCotizacion() {
-        JPanel panel = new JPanel(new GridLayout(2, 5, 5, 5));
+        JPanel panel = new JPanel(new GridLayout(2, 6, 5, 5));
         panel.setBorder(BorderFactory.createTitledBorder("Datos de la Cotización"));
 
         txtFecha = new JTextField();
@@ -135,6 +166,7 @@ public class MainCotizacionFrame extends JFrame {
         txtGarantia = new JTextField();
         txtTentativa = new JTextField();
         txtValidez = new JTextField();
+        txtDescuento = new JTextField("0.00"); // Campo descuento
 
         panel.add(new JLabel("Fecha Emisión:"));
         panel.add(txtFecha);
@@ -146,8 +178,8 @@ public class MainCotizacionFrame extends JFrame {
         panel.add(txtTentativa);
         panel.add(new JLabel("Validez Oferta:"));
         panel.add(txtValidez);
-
-        // Puedes agregar más campos según tu modelo
+        panel.add(new JLabel("Descuento S/:"));
+        panel.add(txtDescuento);
 
         return panel;
     }
@@ -156,11 +188,15 @@ public class MainCotizacionFrame extends JFrame {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Detalle de Cotización"));
 
-        // Agrega columna oculta "ID Producto"
         modeloDetalle = new DefaultTableModel(
-                new Object[] { "ID Producto", "Producto", "Cantidad", "Precio Unitario", "Subtotal" }, 0);
+                new Object[] { "ID Producto", "Producto", "Cantidad", "Precio Unitario", "Subtotal" }, 0) {
+            @Override
+            public boolean isCellEditable(int row, int col) {
+                // Solo permitir editar la columna cantidad
+                return col == 2;
+            }
+        };
         tablaDetalle = new JTable(modeloDetalle);
-        // Oculta la columna "ID Producto" visualmente
         tablaDetalle.getColumnModel().getColumn(0).setMinWidth(0);
         tablaDetalle.getColumnModel().getColumn(0).setMaxWidth(0);
         tablaDetalle.getColumnModel().getColumn(0).setWidth(0);
@@ -178,7 +214,44 @@ public class MainCotizacionFrame extends JFrame {
         btnAgregarProducto.addActionListener(e -> abrirProductosFrame());
         btnQuitarProducto.addActionListener(e -> quitarProductoSeleccionado());
 
+        // Validación de stock al modificar cantidad
+        tablaDetalle.getModel().addTableModelListener(e -> {
+            int row = e.getFirstRow();
+            int col = e.getColumn();
+            if (col == 2 && row >= 0) {
+                try {
+                    int nuevaCantidad = Integer.parseInt(tablaDetalle.getValueAt(row, 2).toString());
+                    int stock = obtenerStockProducto(tablaDetalle.getValueAt(row, 0).toString());
+                    if (nuevaCantidad <= 0 || nuevaCantidad > stock) {
+                        JOptionPane.showMessageDialog(this, "Cantidad inválida o excede el stock (" + stock + ").");
+                        // Restaurar cantidad anterior
+                        tablaDetalle.setValueAt(1, row, 2);
+                    } else {
+                        double precio = Double.parseDouble(tablaDetalle.getValueAt(row, 3).toString());
+                        tablaDetalle.setValueAt(precio * nuevaCantidad, row, 4);
+                        actualizarResumen();
+                    }
+                } catch (Exception ex) {
+                    tablaDetalle.setValueAt(1, row, 2);
+                }
+            }
+        });
+
         return panel;
+    }
+
+    private int obtenerStockProducto(String idServ) {
+        try (Connection conn = DatabaseConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement("SELECT stock FROM Servicio_Producto WHERE id_serv = ?")) {
+            ps.setString(1, idServ);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("stock");
+            }
+        } catch (SQLException ex) {
+            // Si hay error, por defecto 1
+        }
+        return 1;
     }
 
     private void abrirProductosFrame() {
@@ -204,11 +277,16 @@ public class MainCotizacionFrame extends JFrame {
 
     private void actualizarResumen() {
         double subtotal = 0;
+        double descuento = 0.0;
+        try {
+            descuento = Double.parseDouble(txtDescuento.getText());
+        } catch (Exception ex) {
+            descuento = 0.0;
+        }
         for (int i = 0; i < modeloDetalle.getRowCount(); i++) {
             subtotal += Double.parseDouble(modeloDetalle.getValueAt(i, 4).toString());
         }
-        double descuento = 0.0; // Si tienes campo de descuento, úsalo aquí
-        double igv = 0.18; // Valor por defecto, puedes obtenerlo de la BD si lo necesitas
+        double igv = 0.18;
         double base = subtotal - descuento;
         double igvCalc = base * igv;
         double total = base + igvCalc;
@@ -331,15 +409,11 @@ public class MainCotizacionFrame extends JFrame {
         // Validación de fechas
         String fechaStr = txtFecha.getText().trim();
         String validezStr = txtValidez.getText().trim();
-        if (fechaStr.isEmpty() || validezStr.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Debe ingresar ambas fechas (emisión y validez) en formato yyyy-MM-dd.",
-                    "Error de Fecha", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        Date femi, vofer;
+        Date femi = null;
+        Date vofer = null;
         try {
-            femi = Date.valueOf(fechaStr);
-            vofer = Date.valueOf(validezStr);
+            femi = fechaStr.isEmpty() ? null : Date.valueOf(fechaStr);
+            vofer = validezStr.isEmpty() ? null : Date.valueOf(validezStr);
         } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this, "Formato de fecha incorrecto. Use yyyy-MM-dd.", "Error de Fecha",
                     JOptionPane.ERROR_MESSAGE);
@@ -347,9 +421,14 @@ public class MainCotizacionFrame extends JFrame {
         }
 
         double desct = 0.0; // Puedes obtenerlo de un campo
-        String cond = txtCond.getText();
-        String gara = txtGarantia.getText();
-        String tent = txtTentativa.getText();
+        try {
+            desct = Double.parseDouble(txtDescuento.getText());
+        } catch (Exception ex) {
+            desct = 0.0;
+        }
+        String cond = txtCond.getText().isEmpty() ? null : txtCond.getText();
+        String gara = txtGarantia.getText().isEmpty() ? null : txtGarantia.getText();
+        String tent = txtTentativa.getText().isEmpty() ? null : txtTentativa.getText();
 
         java.util.List<dataBase.CotizacionDB.DetalleCotizacion> detalles = new java.util.ArrayList<>();
         for (int i = 0; i < modeloDetalle.getRowCount(); i++) {
@@ -359,8 +438,7 @@ public class MainCotizacionFrame extends JFrame {
         }
 
         try {
-            dataBase.CotizacionDB.crearCotizacionCompleta(ncot, idCli, idEmp, femi, desct, cond, gara, tent, vofer,
-                    detalles);
+            CotizacionDB.crearCotizacionCompleta(ncot, idCli, idEmp, femi, desct, cond, gara, tent, vofer, detalles);
             JOptionPane.showMessageDialog(this, "Cotización generada correctamente.");
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Error al generar cotización: " + ex.getMessage());
