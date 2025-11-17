@@ -37,20 +37,56 @@ public class ClientesPanel extends JPanel {
         btnAgregar.addActionListener(e -> agregarCliente());
         btnModificar.addActionListener(e -> modificarCliente());
         btnEliminar.addActionListener(e -> eliminarCliente());
-        btnReactivar.addActionListener(e -> reactivarCliente());
         btnActualizar.addActionListener(e -> cargarClientes());
+        btnReactivar.addActionListener(e -> mostrarVentanaReactivar());
     }
 
     private void cargarClientes() {
         modeloClientes.setRowCount(0);
         try {
-            // Cambia a la función de desactivados si es ventana de reactivación
-            for (String[] cli : ClienteDB.listarClientesDesactivados()) {
+            for (String[] cli : ClienteDB.listarClientes()) { // Solo activos
                 modeloClientes.addRow(cli);
             }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Error al cargar clientes: " + ex.getMessage());
         }
+    }
+
+    private void mostrarVentanaReactivar() {
+        JFrame frame = new JFrame("Reactivar Clientes");
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setSize(600, 400);
+
+        DefaultTableModel modelo = new DefaultTableModel(new Object[] { "ID", "Nombre", "RUC", "Observaciones" }, 0);
+        JTable tabla = new JTable(modelo);
+
+        try {
+            for (String[] cli : dataBase.ClienteDB.listarClientesDesactivados()) {
+                modelo.addRow(cli);
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(frame, "Error al cargar clientes desactivados: " + ex.getMessage());
+        }
+
+        JButton btnReactivarSel = new JButton("Reactivar");
+        btnReactivarSel.addActionListener(e -> {
+            int fila = tabla.getSelectedRow();
+            if (fila != -1) {
+                int id = Integer.parseInt(modelo.getValueAt(fila, 0).toString());
+                try {
+                    dataBase.ClienteDB.reactivarCliente(id);
+                    modelo.removeRow(fila);
+                } catch (SQLException ex) {
+                    JOptionPane.showMessageDialog(frame, "Error al reactivar cliente: " + ex.getMessage());
+                }
+            }
+        });
+
+        JPanel panelBotones = new JPanel();
+        panelBotones.add(btnReactivarSel);
+        frame.add(new JScrollPane(tabla), BorderLayout.CENTER);
+        frame.add(panelBotones, BorderLayout.SOUTH);
+        frame.setVisible(true);
     }
 
     private void agregarCliente() {
@@ -121,19 +157,6 @@ public class ClientesPanel extends JPanel {
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(this, "Error al eliminar cliente: " + ex.getMessage());
             }
-        }
-    }
-
-    private void reactivarCliente() {
-        int fila = tablaClientes.getSelectedRow();
-        if (fila == -1)
-            return;
-        String id = modeloClientes.getValueAt(fila, 0).toString();
-        try {
-            ClienteDB.reactivarCliente(Integer.parseInt(id));
-            cargarClientes();
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Error al reactivar cliente: " + ex.getMessage());
         }
     }
 }

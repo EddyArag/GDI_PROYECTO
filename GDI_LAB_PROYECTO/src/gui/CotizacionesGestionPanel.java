@@ -33,7 +33,7 @@ public class CotizacionesGestionPanel extends JPanel {
         add(panelBotones, BorderLayout.SOUTH);
 
         btnEliminar.addActionListener(e -> eliminarCotizacion());
-        btnReactivar.addActionListener(e -> reactivarCotizacion());
+        btnReactivar.addActionListener(e -> mostrarVentanaReactivar());
         btnModificar.addActionListener(e -> modificarCotizacion());
         btnActualizar.addActionListener(e -> cargarCotizaciones());
     }
@@ -41,13 +41,45 @@ public class CotizacionesGestionPanel extends JPanel {
     private void cargarCotizaciones() {
         modeloCotizaciones.setRowCount(0);
         try {
-            // Cambia a la función de desactivados si es ventana de reactivación
-            for (String[] cot : CotizacionDB.listarCotizacionesDesactivadas()) {
+            for (String[] cot : CotizacionDB.listarCotizaciones()) { // Solo activas
                 modeloCotizaciones.addRow(cot);
             }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Error al cargar cotizaciones: " + ex.getMessage());
         }
+    }
+
+    private void mostrarVentanaReactivar() {
+        JFrame frame = new JFrame("Reactivar Cotizaciones");
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setSize(600, 400);
+        JTable tabla = new JTable(new DefaultTableModel(new Object[] { "NCOT", "Fecha", "Cliente", "Garantía" }, 0));
+        DefaultTableModel modelo = (DefaultTableModel) tabla.getModel();
+        try {
+            for (String[] cot : CotizacionDB.listarCotizacionesDesactivadas()) {
+                modelo.addRow(cot);
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al cargar cotizaciones desactivadas: " + ex.getMessage());
+        }
+        JButton btnReactivarSel = new JButton("Reactivar");
+        btnReactivarSel.addActionListener(e -> {
+            int fila = tabla.getSelectedRow();
+            if (fila != -1) {
+                String ncot = modelo.getValueAt(fila, 0).toString();
+                try {
+                    CotizacionDB.reactivarCotizacion(ncot);
+                    modelo.removeRow(fila);
+                } catch (SQLException ex) {
+                    JOptionPane.showMessageDialog(frame, "Error al reactivar cotización: " + ex.getMessage());
+                }
+            }
+        });
+        JPanel panelBotones = new JPanel();
+        panelBotones.add(btnReactivarSel);
+        frame.add(new JScrollPane(tabla), BorderLayout.CENTER);
+        frame.add(panelBotones, BorderLayout.SOUTH);
+        frame.setVisible(true);
     }
 
     private void eliminarCotizacion() {

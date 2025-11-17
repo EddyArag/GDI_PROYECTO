@@ -21,6 +21,7 @@ public class MainCotizacionFrame extends JFrame {
     // Componentes de Cliente
     private JComboBox<String> comboClientes;
     private JTextField txtNombre, txtApellidoP, txtApellidoM, txtRUC, txtObs;
+    private JButton btnActualizarClientes; // Botón actualizar clientes
 
     // Componentes de Cotización
     private JTextField txtFecha, txtCond, txtGarantia, txtTentativa, txtValidez;
@@ -90,9 +91,24 @@ public class MainCotizacionFrame extends JFrame {
         JButton btnProductos = (JButton) panelMenuLateral.getComponent(2);
         JButton btnCotizaciones = (JButton) panelMenuLateral.getComponent(4);
 
-        btnClientes.addActionListener(e -> new ClientesFrame().setVisible(true));
+        btnClientes.addActionListener(e -> {
+            JFrame frame = new JFrame("Gestión de Clientes");
+            frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            frame.setSize(700, 500);
+            frame.setLocationRelativeTo(this);
+            frame.add(new ClientesPanel());
+            frame.setVisible(true);
+        });
         btnProductos.addActionListener(e -> mostrarPanelGestion(panelGestionProductos));
         btnCotizaciones.addActionListener(e -> mostrarPanelGestion(panelGestionCotizaciones));
+
+        // Actualiza clientes al ganar foco la ventana principal
+        this.addWindowFocusListener(new WindowAdapter() {
+            @Override
+            public void windowGainedFocus(WindowEvent e) {
+                cargarClientes();
+            }
+        });
     }
 
     private void cargarLogoEmpresa() {
@@ -136,6 +152,7 @@ public class MainCotizacionFrame extends JFrame {
 
         panel.add(new JLabel("Seleccionar Cliente:"));
         panel.add(comboClientes);
+        // Elimina el botón de actualizar
         panel.add(new JLabel("Nombre:"));
         panel.add(txtNombre);
         panel.add(new JLabel("Apellido Paterno:"));
@@ -147,7 +164,6 @@ public class MainCotizacionFrame extends JFrame {
         panel.add(new JLabel("Observaciones:"));
         panel.add(txtObs);
 
-        // Campos no editables (solo para mostrar datos)
         txtNombre.setEditable(false);
         txtApellidoP.setEditable(false);
         txtApellidoM.setEditable(false);

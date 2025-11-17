@@ -37,20 +37,52 @@ public class ProductosGestionPanel extends JPanel {
         btnAgregar.addActionListener(e -> agregarProducto());
         btnModificar.addActionListener(e -> modificarProducto());
         btnEliminar.addActionListener(e -> eliminarProducto());
-        btnReactivar.addActionListener(e -> reactivarProducto());
+        btnReactivar.addActionListener(e -> mostrarVentanaReactivar());
         btnActualizar.addActionListener(e -> cargarProductos());
     }
 
     private void cargarProductos() {
         modeloProductos.setRowCount(0);
         try {
-            // Cambia a la función de desactivados si es ventana de reactivación
-            for (String[] prod : ProductoDB.listarProductosDesactivados()) {
+            for (String[] prod : ProductoDB.listarProductos()) { // Solo activos
                 modeloProductos.addRow(prod);
             }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Error al cargar productos: " + ex.getMessage());
         }
+    }
+
+    private void mostrarVentanaReactivar() {
+        JFrame frame = new JFrame("Reactivar Productos");
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setSize(600, 400);
+        JTable tabla = new JTable(new DefaultTableModel(new Object[] { "ID", "Descripción", "Precio", "Stock" }, 0));
+        DefaultTableModel modelo = (DefaultTableModel) tabla.getModel();
+        try {
+            for (String[] prod : ProductoDB.listarProductosDesactivados()) {
+                modelo.addRow(prod);
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al cargar productos desactivados: " + ex.getMessage());
+        }
+        JButton btnReactivarSel = new JButton("Reactivar");
+        btnReactivarSel.addActionListener(e -> {
+            int fila = tabla.getSelectedRow();
+            if (fila != -1) {
+                String idServ = modelo.getValueAt(fila, 0).toString();
+                try {
+                    ProductoDB.reactivarProducto(idServ);
+                    modelo.removeRow(fila);
+                } catch (SQLException ex) {
+                    JOptionPane.showMessageDialog(frame, "Error al reactivar producto: " + ex.getMessage());
+                }
+            }
+        });
+        JPanel panelBotones = new JPanel();
+        panelBotones.add(btnReactivarSel);
+        frame.add(new JScrollPane(tabla), BorderLayout.CENTER);
+        frame.add(panelBotones, BorderLayout.SOUTH);
+        frame.setVisible(true);
     }
 
     private void agregarProducto() {
@@ -115,19 +147,6 @@ public class ProductosGestionPanel extends JPanel {
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(this, "Error al eliminar producto: " + ex.getMessage());
             }
-        }
-    }
-
-    private void reactivarProducto() {
-        int fila = tablaProductos.getSelectedRow();
-        if (fila == -1)
-            return;
-        String idServ = modeloProductos.getValueAt(fila, 0).toString();
-        try {
-            ProductoDB.reactivarProducto(idServ);
-            cargarProductos();
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Error al reactivar producto: " + ex.getMessage());
         }
     }
 }
