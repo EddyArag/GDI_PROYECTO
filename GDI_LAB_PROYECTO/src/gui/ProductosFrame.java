@@ -18,6 +18,10 @@ public class ProductosFrame extends JFrame {
 
     private ProductoListener listener;
 
+    private Color colorFondoPanel = new Color(220, 235, 250);
+    private Color colorBorde = new Color(100, 160, 220);
+    private Font fuenteCampos = new Font("Segoe UI", Font.PLAIN, 16);
+
     public ProductosFrame(ProductoListener listener) {
         this.listener = listener;
         setTitle("Seleccionar Producto");
@@ -26,18 +30,36 @@ public class ProductosFrame extends JFrame {
 
         modeloProductos = new DefaultTableModel(new Object[] { "ID", "Descripción", "Precio", "Stock" }, 0);
         tablaProductos = new JTable(modeloProductos);
+        tablaProductos.setFont(fuenteCampos);
+        tablaProductos.setRowHeight(28);
+        tablaProductos.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 15));
+        tablaProductos.setBackground(Color.WHITE);
+
         cargarProductos();
 
         txtCantidad = new JTextField(5);
+        txtCantidad.setFont(fuenteCampos);
+
         btnAgregar = new JButton("Agregar a Cotización");
+        btnAgregar.setBackground(colorBorde);
+        btnAgregar.setForeground(Color.WHITE);
+        btnAgregar.setFont(fuenteCampos);
 
         JPanel panelInferior = new JPanel();
+        panelInferior.setBackground(colorFondoPanel);
         panelInferior.add(new JLabel("Cantidad:"));
         panelInferior.add(txtCantidad);
         panelInferior.add(btnAgregar);
 
-        add(new JScrollPane(tablaProductos), BorderLayout.CENTER);
-        add(panelInferior, BorderLayout.SOUTH);
+        JPanel panelPrincipal = new JPanel(new BorderLayout());
+        panelPrincipal.setBackground(colorFondoPanel);
+        panelPrincipal.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(colorBorde, 2, true), "Productos/Servicios"));
+
+        panelPrincipal.add(new JScrollPane(tablaProductos), BorderLayout.CENTER);
+        panelPrincipal.add(panelInferior, BorderLayout.SOUTH);
+
+        setContentPane(panelPrincipal);
 
         btnAgregar.addActionListener(e -> agregarProducto());
     }

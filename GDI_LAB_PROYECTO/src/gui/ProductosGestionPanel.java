@@ -11,11 +11,23 @@ public class ProductosGestionPanel extends JPanel {
     private DefaultTableModel modeloProductos;
     private JButton btnAgregar, btnModificar, btnEliminar, btnReactivar, btnActualizar;
 
+    private Color colorFondoPanel = new Color(220, 235, 250);
+    private Color colorBorde = new Color(100, 160, 220);
+    private Font fuenteCampos = new Font("Segoe UI", Font.PLAIN, 16);
+
     public ProductosGestionPanel() {
         setLayout(new BorderLayout());
+        setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(colorBorde, 2, true), "Gestión de Productos/Servicios"));
+        setBackground(colorFondoPanel);
 
         modeloProductos = new DefaultTableModel(new Object[] { "ID", "Descripción", "Precio", "Stock" }, 0);
         tablaProductos = new JTable(modeloProductos);
+        tablaProductos.setFont(fuenteCampos);
+        tablaProductos.setRowHeight(28);
+        tablaProductos.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 15));
+        tablaProductos.setBackground(Color.WHITE);
+
         cargarProductos();
 
         btnAgregar = new JButton("Agregar");
@@ -24,7 +36,24 @@ public class ProductosGestionPanel extends JPanel {
         btnReactivar = new JButton("Reactivar");
         btnActualizar = new JButton("Actualizar");
 
+        btnAgregar.setBackground(colorBorde);
+        btnModificar.setBackground(colorBorde);
+        btnEliminar.setBackground(colorBorde);
+        btnReactivar.setBackground(colorBorde);
+        btnActualizar.setBackground(colorBorde);
+        btnAgregar.setForeground(Color.WHITE);
+        btnModificar.setForeground(Color.WHITE);
+        btnEliminar.setForeground(Color.WHITE);
+        btnReactivar.setForeground(Color.WHITE);
+        btnActualizar.setForeground(Color.WHITE);
+        btnAgregar.setFont(fuenteCampos);
+        btnModificar.setFont(fuenteCampos);
+        btnEliminar.setFont(fuenteCampos);
+        btnReactivar.setFont(fuenteCampos);
+        btnActualizar.setFont(fuenteCampos);
+
         JPanel panelBotones = new JPanel();
+        panelBotones.setBackground(colorFondoPanel);
         panelBotones.add(btnAgregar);
         panelBotones.add(btnModificar);
         panelBotones.add(btnEliminar);

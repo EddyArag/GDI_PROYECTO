@@ -3,31 +3,70 @@ package gui;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import dataBase.CotizacionDB;
 
 public class CotizacionesGestionPanel extends JPanel {
     private JTable tablaCotizaciones;
     private DefaultTableModel modeloCotizaciones;
-    private JButton btnEliminar, btnReactivar, btnModificar, btnActualizar;
+    private JButton btnEliminar, btnReactivar, btnModificar, btnActualizar, btnVerCotizacion, btnExportarPDF;
+
+    private Color colorFondoPanel = new Color(220, 235, 250);
+    private Color colorBorde = new Color(100, 160, 220);
+    private Font fuenteCampos = new Font("Segoe UI", Font.PLAIN, 16);
 
     public CotizacionesGestionPanel() {
         setLayout(new BorderLayout());
+        setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(colorBorde, 2, true), "Gestión de Cotizaciones"));
+        setBackground(colorFondoPanel);
 
         modeloCotizaciones = new DefaultTableModel(new Object[] { "NCOT", "Fecha", "Cliente", "Garantía" }, 0);
         tablaCotizaciones = new JTable(modeloCotizaciones);
+        tablaCotizaciones.setFont(fuenteCampos);
+        tablaCotizaciones.setRowHeight(28);
+        tablaCotizaciones.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 15));
+        tablaCotizaciones.setBackground(Color.WHITE);
+
         cargarCotizaciones();
 
         btnEliminar = new JButton("Eliminar");
         btnReactivar = new JButton("Reactivar");
         btnModificar = new JButton("Modificar");
         btnActualizar = new JButton("Actualizar");
+        btnVerCotizacion = new JButton("Ver Cotización");
+        btnExportarPDF = new JButton("Exportar PDF");
+
+        btnEliminar.setBackground(colorBorde);
+        btnReactivar.setBackground(colorBorde);
+        btnModificar.setBackground(colorBorde);
+        btnActualizar.setBackground(colorBorde);
+        btnVerCotizacion.setBackground(colorBorde);
+        btnExportarPDF.setBackground(colorBorde);
+        btnEliminar.setForeground(Color.WHITE);
+        btnReactivar.setForeground(Color.WHITE);
+        btnModificar.setForeground(Color.WHITE);
+        btnActualizar.setForeground(Color.WHITE);
+        btnVerCotizacion.setForeground(Color.WHITE);
+        btnExportarPDF.setForeground(Color.WHITE);
+        btnEliminar.setFont(fuenteCampos);
+        btnReactivar.setFont(fuenteCampos);
+        btnModificar.setFont(fuenteCampos);
+        btnActualizar.setFont(fuenteCampos);
+        btnVerCotizacion.setFont(fuenteCampos);
+        btnExportarPDF.setFont(fuenteCampos);
 
         JPanel panelBotones = new JPanel();
+        panelBotones.setBackground(colorFondoPanel);
         panelBotones.add(btnEliminar);
         panelBotones.add(btnReactivar);
         panelBotones.add(btnModificar);
         panelBotones.add(btnActualizar);
+        panelBotones.add(btnVerCotizacion);
+        panelBotones.add(btnExportarPDF);
 
         add(new JScrollPane(tablaCotizaciones), BorderLayout.CENTER);
         add(panelBotones, BorderLayout.SOUTH);
@@ -36,6 +75,8 @@ public class CotizacionesGestionPanel extends JPanel {
         btnReactivar.addActionListener(e -> mostrarVentanaReactivar());
         btnModificar.addActionListener(e -> modificarCotizacion());
         btnActualizar.addActionListener(e -> cargarCotizaciones());
+        btnVerCotizacion.addActionListener(e -> verCotizacionSeleccionada());
+        btnExportarPDF.addActionListener(e -> exportarCotizacionPDF());
     }
 
     private void cargarCotizaciones() {
@@ -123,5 +164,84 @@ public class CotizacionesGestionPanel extends JPanel {
         frame.setLocationRelativeTo(this);
         frame.add(new ModificarCotizacionPanel(ncot));
         frame.setVisible(true);
+    }
+
+    private void verCotizacionSeleccionada() {
+        int fila = tablaCotizaciones.getSelectedRow();
+        if (fila == -1) {
+            JOptionPane.showMessageDialog(this, "Seleccione una cotización para ver.");
+            return;
+        }
+        String ncot = modeloCotizaciones.getValueAt(fila, 0).toString();
+
+        String fecha = modeloCotizaciones.getValueAt(fila, 1).toString();
+        String cliente = modeloCotizaciones.getValueAt(fila, 2).toString();
+        String garantia = modeloCotizaciones.getValueAt(fila, 3).toString();
+
+        double subtotal = 0;
+        double descuento = 0;
+        double igv = 0.18;
+        double total = 0;
+        double base = 0;
+        java.util.List<String[]> detalles = null; // <-- Declarar aquí
+        try {
+            detalles = dataBase.DetalleCotizacionDB.listarLineasCotizacion(ncot);
+            for (String[] det : detalles) {
+                subtotal += Double.parseDouble(det[5]); // linea_total
+            }
+            try (Connection conn = dataBase.DatabaseConnection.getConnection();
+                 PreparedStatement ps = conn.prepareStatement("SELECT desct FROM Cotizacion WHERE ncot = ?")) {
+                ps.setString(1, ncot);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) {
+                    descuento = rs.getDouble("desct");
+                }
+            }
+            base = subtotal - descuento;
+            double igvCalc = base * igv;
+            total = base + igvCalc;
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al obtener detalles: " + ex.getMessage());
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Cotización: ").append(ncot).append("\n");
+        sb.append("Fecha Emisión: ").append(fecha).append("\n");
+        sb.append("Cliente: ").append(cliente).append("\n");
+        sb.append("Garantía: ").append(garantia).append("\n");
+        sb.append("Descuento: S/ ").append(String.format("%.2f", descuento)).append("\n");
+        sb.append("Subtotal: S/ ").append(String.format("%.2f", subtotal)).append("\n");
+        sb.append("IGV: S/ ").append(String.format("%.2f", base * igv)).append("\n");
+        sb.append("Total: S/ ").append(String.format("%.2f", total)).append("\n\n");
+        sb.append("Detalle:\n");
+        if (detalles != null) {
+            for (String[] det : detalles) {
+                sb.append("- ").append(det[2]).append(" x").append(det[4]).append(" = S/").append(det[5]).append("\n");
+            }
+        }
+
+        JTextArea area = new JTextArea(sb.toString());
+        area.setEditable(false);
+        area.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        area.setBackground(new Color(230, 240, 255));
+        JScrollPane scroll = new JScrollPane(area);
+        scroll.setPreferredSize(new Dimension(500, 400));
+        JOptionPane.showMessageDialog(this, scroll, "Vista de Cotización", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void exportarCotizacionPDF() {
+        int fila = tablaCotizaciones.getSelectedRow();
+        if (fila == -1) {
+            JOptionPane.showMessageDialog(this, "Seleccione una cotización para exportar.");
+            return;
+        }
+        String ncot = modeloCotizaciones.getValueAt(fila, 0).toString();
+        try {
+            gui.ExportarCotizacionPDF.exportar(ncot);
+            JOptionPane.showMessageDialog(this, "Cotización exportada a PDF correctamente.");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al exportar PDF: " + ex.getMessage());
+        }
     }
 }
