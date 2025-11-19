@@ -13,9 +13,9 @@ public class DatabaseConnection {
     // - URL: host, puerto y nombre de la base de datos
     // - USER: usuario de la base de datos
     // - PASSWORD: contraseña de la base de datos
-    private static final String URL = "jdbc:postgresql://localhost:5432/sistema_cotizacion_gdi";
-    private static final String USER = "postgres";
-    private static final String PASSWORD = "eddy";
+    private static final String URL = "jdbc:postgresql://localhost:5432/sistema_cotizacion";
+    private static final String USER = "innova";      // Usuario creado en tu script
+    private static final String PASSWORD = "Soft123!";    // Contraseña del usuario
 
     /**
      * Obtiene una conexión JDBC a la base de datos PostgreSQL.

@@ -31,6 +31,7 @@ public class MainCotizacionFrame extends JFrame {
     private JTable tablaDetalle;
     private DefaultTableModel modeloDetalle;
     private JButton btnAgregarProducto, btnQuitarProducto;
+    private JButton btnUsarCotizacionAnterior; // Nuevo botón
 
     // Resumen de costos
     private JLabel lblSubtotal, lblDescuento, lblIGV, lblTotal;
@@ -44,6 +45,8 @@ public class MainCotizacionFrame extends JFrame {
     private JPanel panelGestionBackup; // Nuevo panel
 
     private JButton btnGenerarCotizacion;
+
+
 
     // Cambia la variable para que sea persistente en la clase
     private int clienteSeleccionadoIndex = -1;
@@ -59,16 +62,17 @@ public class MainCotizacionFrame extends JFrame {
     public MainCotizacionFrame() {
         setTitle("Generar Cotización");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(900, 700);
+        setSize(1100, 700); // Más ancho para barra horizontal
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        // Logo empresa
+        // Logo empresa (más grande, esquina superior izquierda)
         lblLogo = new JLabel();
-        lblLogo.setPreferredSize(new Dimension(120, 80));
+        lblLogo.setPreferredSize(new Dimension(180, 120)); // Más grande
         cargarLogoEmpresa();
 
         JPanel panelLogo = new JPanel(new BorderLayout());
+        panelLogo.setBackground(colorFondoPanel);
         panelLogo.add(lblLogo, BorderLayout.WEST);
 
         // Inicializar paneles
@@ -76,18 +80,20 @@ public class MainCotizacionFrame extends JFrame {
         panelCotizacion = crearPanelCotizacion();
         panelDetalle = crearPanelDetalle();
         panelResumen = crearPanelResumen();
-        panelMenuLateral = crearPanelMenuLateral();
 
         // Inicializar paneles de gestión
         panelGestionClientes = crearPanelGestionClientes();
         panelGestionProductos = crearPanelGestionProductos();
         panelGestionCotizaciones = crearPanelGestionCotizaciones();
         panelGestionEmpresa = crearPanelGestionEmpresa();
-        panelGestionBackup = crearPanelGestionBackup(); // Nuevo panel
+        panelGestionBackup = crearPanelGestionBackup();
+
+        // Barra de menú horizontal
+        JPanel barraMenu = crearBarraMenuHorizontal();
 
         // Estructura principal
         JPanel panelCentral = new JPanel(new BorderLayout());
-        panelCentral.add(panelLogo, BorderLayout.NORTH);
+        panelCentral.add(panelLogo, BorderLayout.WEST);
         panelCentral.add(panelCliente, BorderLayout.CENTER);
         panelCentral.add(panelCotizacion, BorderLayout.SOUTH);
 
@@ -95,21 +101,24 @@ public class MainCotizacionFrame extends JFrame {
         panelMain.add(panelCentral, BorderLayout.NORTH);
         panelMain.add(panelDetalle, BorderLayout.CENTER);
 
-        // Menú lateral
-        add(panelMenuLateral, BorderLayout.WEST);
+        add(barraMenu, BorderLayout.NORTH); // Barra horizontal arriba
         add(panelMain, BorderLayout.CENTER);
         add(panelResumen, BorderLayout.EAST);
 
         cargarClientes();
 
-        // Eventos para menú lateral
-        JButton btnClientes = (JButton) panelMenuLateral.getComponent(0);
-        JButton btnProductos = (JButton) panelMenuLateral.getComponent(2);
-        JButton btnCotizaciones = (JButton) panelMenuLateral.getComponent(4);
+        // Eventos para barra de menú horizontal
+        JButton btnClientes = (JButton) barraMenu.getComponent(0);
+        JButton btnProductos = (JButton) barraMenu.getComponent(1);
+        JButton btnCotizaciones = (JButton) barraMenu.getComponent(2);
+        JButton btnEmpresa = (JButton) barraMenu.getComponent(3);
+        JButton btnBackup = (JButton) barraMenu.getComponent(4);
 
         btnClientes.addActionListener(e -> mostrarPanelGestionUnico(ClientesPanel.class, panelGestionClientes));
         btnProductos.addActionListener(e -> mostrarPanelGestion(panelGestionProductos));
         btnCotizaciones.addActionListener(e -> mostrarPanelGestion(panelGestionCotizaciones));
+        btnEmpresa.addActionListener(e -> mostrarPanelGestion(panelGestionEmpresa));
+        btnBackup.addActionListener(e -> mostrarPanelGestion(panelGestionBackup));
 
         // Actualiza clientes al ganar foco la ventana principal
         this.addWindowFocusListener(new WindowAdapter() {
@@ -120,6 +129,29 @@ public class MainCotizacionFrame extends JFrame {
         });
     }
 
+    private JPanel crearBarraMenuHorizontal() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(1, 5, 0, 0)); // 5 botones, sin espacio
+        panel.setBackground(new Color(200, 220, 245));
+        panel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, colorBorde));
+
+        String[] nombres = { "Clientes", "Servicios/Productos", "Cotizaciones", "Empresa", "Backup/Restore" };
+        for (String nombre : nombres) {
+            JButton btn = new JButton(nombre);
+            btn.setBackground(colorBorde);
+            btn.setForeground(Color.WHITE);
+            btn.setFont(fuenteCampos);
+            btn.setFocusPainted(false);
+            // Borde suave y visible para cada botón
+            btn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(80, 130, 200), 2, true),
+                BorderFactory.createEmptyBorder(12, 0, 12, 0)
+            ));
+            panel.add(btn);
+        }
+        return panel;
+    }
+
     private void cargarLogoEmpresa() {
         try (Connection conn = DatabaseConnection.getConnection();
                 Statement stmt = conn.createStatement();
@@ -128,7 +160,7 @@ public class MainCotizacionFrame extends JFrame {
                 byte[] logoBytes = rs.getBytes("logo");
                 if (logoBytes != null && logoBytes.length > 0) {
                     ImageIcon icon = new ImageIcon(logoBytes);
-                    Image img = icon.getImage().getScaledInstance(120, 80, Image.SCALE_SMOOTH);
+                    Image img = icon.getImage().getScaledInstance(180, 120, Image.SCALE_SMOOTH); // Más grande
                     lblLogo.setIcon(new ImageIcon(img));
                 }
             }
@@ -314,23 +346,29 @@ public class MainCotizacionFrame extends JFrame {
 
         btnAgregarProducto = new JButton("Agregar Producto");
         btnQuitarProducto = new JButton("Quitar Producto");
+        btnUsarCotizacionAnterior = new JButton("Usar Cotización Anterior"); // Mueve aquí
         btnAgregarProducto.setBackground(colorBorde);
         btnQuitarProducto.setBackground(colorBorde);
+        btnUsarCotizacionAnterior.setBackground(colorBorde);
         btnAgregarProducto.setForeground(Color.WHITE);
         btnQuitarProducto.setForeground(Color.WHITE);
+        btnUsarCotizacionAnterior.setForeground(Color.WHITE);
         btnAgregarProducto.setFont(fuenteCampos);
         btnQuitarProducto.setFont(fuenteCampos);
+        btnUsarCotizacionAnterior.setFont(fuenteCampos);
 
         JPanel panelBotones = new JPanel();
         panelBotones.setBackground(colorFondoPanel);
         panelBotones.add(btnAgregarProducto);
         panelBotones.add(btnQuitarProducto);
+        panelBotones.add(btnUsarCotizacionAnterior); // Aquí junto a los otros
 
         panel.add(new JScrollPane(tablaDetalle), BorderLayout.CENTER);
         panel.add(panelBotones, BorderLayout.SOUTH);
 
         btnAgregarProducto.addActionListener(e -> abrirProductosFrame());
         btnQuitarProducto.addActionListener(e -> quitarProductoSeleccionado());
+        btnUsarCotizacionAnterior.addActionListener(e -> abrirPanelCargarPlantillaCotizacion());
 
         tablaDetalle.getModel().addTableModelListener(e -> {
             int row = e.getFirstRow();
@@ -472,8 +510,35 @@ public class MainCotizacionFrame extends JFrame {
     }
 
     private void agregarProductoADetalle(String idServ, String nombre, double precio, int cantidad) {
-        double subtotal = precio * cantidad;
-        modeloDetalle.addRow(new Object[] { idServ, nombre, cantidad, precio, subtotal });
+        // Verifica si el producto ya está en el detalle
+        int filaExistente = -1;
+        int cantidadExistente = 0;
+        for (int i = 0; i < modeloDetalle.getRowCount(); i++) {
+            if (modeloDetalle.getValueAt(i, 0).toString().equals(idServ)) {
+                filaExistente = i;
+                cantidadExistente = Integer.parseInt(modeloDetalle.getValueAt(i, 2).toString());
+                break;
+            }
+        }
+        int stock = obtenerStockProducto(idServ);
+        int nuevaCantidad = cantidad;
+        if (filaExistente != -1) {
+            nuevaCantidad += cantidadExistente;
+            if (nuevaCantidad > stock) {
+                JOptionPane.showMessageDialog(this, "La cantidad total (" + nuevaCantidad + ") excede el stock disponible (" + stock + ").", "Error de Stock", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            modeloDetalle.setValueAt(nuevaCantidad, filaExistente, 2);
+            modeloDetalle.setValueAt(precio, filaExistente, 3);
+            modeloDetalle.setValueAt(precio * nuevaCantidad, filaExistente, 4);
+        } else {
+            if (cantidad > stock) {
+                JOptionPane.showMessageDialog(this, "La cantidad solicitada excede el stock disponible (" + stock + ").", "Error de Stock", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            double subtotal = precio * cantidad;
+            modeloDetalle.addRow(new Object[] { idServ, nombre, cantidad, precio, subtotal });
+        }
         actualizarResumen();
     }
 
@@ -618,7 +683,16 @@ public class MainCotizacionFrame extends JFrame {
                 }
             }
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Error al generar cotización: " + ex.getMessage());
+            String msg = ex.getMessage();
+            if (msg != null && msg.contains("ERROR DE VALIDACIÓN")) {
+                String mensaje = msg.split("\n")[0];
+                JOptionPane.showMessageDialog(this, mensaje, "Error de Validación", JOptionPane.ERROR_MESSAGE);
+            } else if (msg != null && msg.contains("ERROR DE UNICIDAD")) {
+                String mensaje = msg.split("\n")[0];
+                JOptionPane.showMessageDialog(this, mensaje, "Error de Unicidad", JOptionPane.ERROR_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Error al generar cotización: " + msg);
+            }
         }
     }
 
@@ -793,6 +867,54 @@ public class MainCotizacionFrame extends JFrame {
             // Si tienes otros campos, agrégalos aquí
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error al modificar cotización: " + ex.getMessage());
+        }
+    }
+
+    private void abrirPanelCargarPlantillaCotizacion() {
+        JFrame frame = new JFrame("Seleccionar Cotización Anterior");
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setSize(700, 500);
+        frame.setLocationRelativeTo(this);
+        frame.add(new CargarPlantillaCotizacionPanel((ncot) -> {
+            cargarDatosDesdeCotizacion(ncot);
+            frame.dispose();
+        }));
+        frame.setVisible(true);
+    }
+
+    // Método para cargar datos desde una cotización seleccionada
+    private void cargarDatosDesdeCotizacion(String ncot) {
+        try (Connection conn = dataBase.DatabaseConnection.getConnection();
+         PreparedStatement ps = conn.prepareStatement("SELECT desct, vofer FROM Cotizacion WHERE ncot = ?")) {
+            ps.setString(1, ncot);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                double desct = rs.getDouble("desct");
+                java.sql.Date vofer = rs.getDate("vofer");
+                txtDescuento.setText(String.format("%.2f", desct));
+                // Solo carga validez si no es anterior a hoy
+                if (vofer != null && !vofer.before(java.sql.Date.valueOf(java.time.LocalDate.now()))) {
+                    txtValidez.setText(vofer.toString());
+                }
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al cargar datos de cotización: " + ex.getMessage());
+        }
+        // Cargar detalles
+        try {
+            modeloDetalle.setRowCount(0);
+            for (String[] det : dataBase.DetalleCotizacionDB.listarLineasCotizacion(ncot)) {
+                modeloDetalle.addRow(new Object[] {
+                    det[1], // id_serv
+                    det[2], // descp
+                    det[4], // cant
+                    det[3], // punit
+                    det[5]  // subtotal
+                });
+            }
+            actualizarResumen();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al cargar detalles: " + ex.getMessage());
         }
     }
 

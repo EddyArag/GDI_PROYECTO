@@ -16,7 +16,7 @@ import dataBase.CotizacionDB;
 public class CotizacionesGestionPanel extends JPanel {
     private JTable tablaCotizaciones;
     private DefaultTableModel modeloCotizaciones;
-    private JButton btnEliminar, btnReactivar, btnModificar, btnActualizar, btnVerCotizacion, btnExportarPDF;
+    private JButton btnEliminar, btnReactivar, btnActualizar, btnVerCotizacion, btnExportarPDF;
 
     private Color colorFondoPanel = new Color(220, 235, 250);
     private Color colorBorde = new Color(100, 160, 220);
@@ -42,26 +42,22 @@ public class CotizacionesGestionPanel extends JPanel {
 
         btnEliminar = new JButton("Eliminar");
         btnReactivar = new JButton("Reactivar");
-        btnModificar = new JButton("Modificar");
         btnActualizar = new JButton("Actualizar");
         btnVerCotizacion = new JButton("Ver Cotización");
         btnExportarPDF = new JButton("Exportar PDF");
 
         btnEliminar.setBackground(colorBorde);
         btnReactivar.setBackground(colorBorde);
-        btnModificar.setBackground(colorBorde);
         btnActualizar.setBackground(colorBorde);
         btnVerCotizacion.setBackground(colorBorde);
         btnExportarPDF.setBackground(colorBorde);
         btnEliminar.setForeground(Color.WHITE);
         btnReactivar.setForeground(Color.WHITE);
-        btnModificar.setForeground(Color.WHITE);
         btnActualizar.setForeground(Color.WHITE);
         btnVerCotizacion.setForeground(Color.WHITE);
         btnExportarPDF.setForeground(Color.WHITE);
         btnEliminar.setFont(fuenteCampos);
         btnReactivar.setFont(fuenteCampos);
-        btnModificar.setFont(fuenteCampos);
         btnActualizar.setFont(fuenteCampos);
         btnVerCotizacion.setFont(fuenteCampos);
         btnExportarPDF.setFont(fuenteCampos);
@@ -70,7 +66,6 @@ public class CotizacionesGestionPanel extends JPanel {
         panelBotones.setBackground(colorFondoPanel);
         panelBotones.add(btnEliminar);
         panelBotones.add(btnReactivar);
-        panelBotones.add(btnModificar);
         panelBotones.add(btnActualizar);
         panelBotones.add(btnVerCotizacion);
         panelBotones.add(btnExportarPDF);
@@ -80,7 +75,6 @@ public class CotizacionesGestionPanel extends JPanel {
 
         btnEliminar.addActionListener(e -> eliminarCotizacion());
         btnReactivar.addActionListener(e -> mostrarVentanaReactivar());
-        btnModificar.addActionListener(e -> modificarCotizacion());
         btnActualizar.addActionListener(e -> cargarCotizaciones());
         btnVerCotizacion.addActionListener(e -> verCotizacionSeleccionada());
         btnExportarPDF.addActionListener(e -> exportarCotizacionPDF());
@@ -170,22 +164,6 @@ public class CotizacionesGestionPanel extends JPanel {
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Error al reactivar cotización: " + ex.getMessage());
         }
-    }
-
-    /**
-     * Muestra el formulario para modificar la cotización seleccionada.
-     */
-    private void modificarCotizacion() {
-        int fila = tablaCotizaciones.getSelectedRow();
-        if (fila == -1)
-            return;
-        String ncot = modeloCotizaciones.getValueAt(fila, 0).toString();
-        JFrame frame = new JFrame("Modificar Cotización");
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(900, 700);
-        frame.setLocationRelativeTo(this);
-        frame.add(new ModificarCotizacionPanel(ncot));
-        frame.setVisible(true);
     }
 
     /**

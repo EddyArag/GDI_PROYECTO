@@ -131,38 +131,109 @@ public class ProductosGestionPanel extends JPanel {
      * Muestra un formulario para agregar un nuevo producto.
      */
     private void agregarProducto() {
-        JTextField idServ = new PlaceholderTextField("Ej: P001");
+        // Pregunta tipo antes de mostrar el formulario
+        String[] opciones = { "Producto", "Servicio" };
+        int tipo = JOptionPane.showOptionDialog(this, "¿Qué desea agregar?", "Tipo de registro",
+            JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, opciones, opciones[0]);
+        if (tipo == JOptionPane.CLOSED_OPTION) return;
+
+        String prefix = tipo == 0 ? "P" : "S";
+        int maxNum = 0;
+        try {
+            for (String[] prod : ProductoDB.listarProductos()) {
+                String id = prod[0];
+                if (id != null && id.startsWith(prefix)) {
+                    try {
+                        int num = Integer.parseInt(id.substring(1));
+                        if (num > maxNum) maxNum = num;
+                    } catch (Exception ignore) {}
+                }
+            }
+        } catch (Exception ignore) {}
+        String nextId = String.format("%s%03d", prefix, maxNum + 1);
+
+        JTextField idServ = new JTextField(nextId);
+        idServ.setEditable(false);
         JTextField descp = new PlaceholderTextField("Ej: Servicio de mantenimiento");
         JTextField precio = new PlaceholderTextField("Ej: 150.00");
         JTextField stock = new PlaceholderTextField("Ej: 10");
         Object[] campos = {
-                "ID:", idServ,
-                "Descripción:", descp,
-                "Precio Unitario:", precio,
-                "Stock:", stock
+            "ID:", idServ,
+            "Descripción:", descp,
+            "Precio Unitario:", precio,
+            "Stock:", stock
         };
-        int res = JOptionPane.showConfirmDialog(this, campos, "Nuevo Producto", JOptionPane.OK_CANCEL_OPTION);
-        if (res == JOptionPane.OK_OPTION) {
+        while (true) {
+            int res = JOptionPane.showConfirmDialog(this, campos, "Nuevo " + opciones[tipo], JOptionPane.OK_CANCEL_OPTION);
+            if (res != JOptionPane.OK_OPTION) return;
+
+            // Validación en Java antes de enviar a la BD
+            if (descp.getText().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "El campo Descripción es obligatorio.", "Validación", JOptionPane.WARNING_MESSAGE);
+                continue;
+            }
+            double precioVal = 0;
             try {
-                // Validación de stock: si vacío, negativo, decimal o no número, fuerza a 0
-                int stockVal = 0;
-                try {
-                    String stockTxt = stock.getText().trim();
-                    double stockDouble = Double.parseDouble(stockTxt);
-                    if (stockTxt.isEmpty() || stockDouble < 0 || stockDouble != Math.floor(stockDouble)) {
-                        stockVal = 0;
-                    } else {
-                        stockVal = (int) stockDouble;
-                    }
-                } catch (Exception ex) {
+                precioVal = Double.parseDouble(precio.getText().trim());
+                if (precioVal <= 0) throw new NumberFormatException();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "El campo Precio debe ser un número mayor a 0.", "Validación", JOptionPane.WARNING_MESSAGE);
+                continue;
+            }
+            String stockTxt = stock.getText().trim();
+            int stockVal = 0;
+            boolean stockAlerta = false;
+            boolean stockNegativo = false;
+            try {
+                double stockDouble = Double.parseDouble(stockTxt);
+                if (stockTxt.isEmpty() || stockDouble != Math.floor(stockDouble)) {
                     stockVal = 0;
+                    stockAlerta = true;
+                } else if (stockDouble < 0) {
+                    stockNegativo = true;
+                } else if (stockDouble == 0) {
+                    stockVal = 0;
+                    stockAlerta = true;
+                } else {
+                    stockVal = (int) stockDouble;
                 }
-                ProductoDB.insertarProducto(idServ.getText(), descp.getText(),
-                        Double.parseDouble(precio.getText()), stockVal);
+            } catch (Exception ex) {
+                stockVal = 0;
+                stockAlerta = true;
+            }
+            if (stockNegativo) {
+                int opt = JOptionPane.showConfirmDialog(this,
+                    "El stock no puede ser negativo.\n¿Desea cambiar el valor de stock?", "Stock Negativo", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                if (opt == JOptionPane.YES_OPTION) {
+                    continue;
+                } else {
+                    return;
+                }
+            }
+            if (stockAlerta) {
+                int confirm = JOptionPane.showConfirmDialog(this,
+                    "El stock ingresado es 0 o inválido.\n¿Está seguro de agregar el " + opciones[tipo].toLowerCase() + " con stock 0?",
+                    "Confirmar Stock 0", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                if (confirm != JOptionPane.YES_OPTION) {
+                    continue;
+                }
+            }
+            try {
+                ProductoDB.insertarProducto(idServ.getText(), descp.getText(), precioVal, stockVal);
                 cargarProductos();
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Error al agregar producto: " + ex.getMessage());
+                String msg = ex.getMessage();
+                if (msg != null && msg.contains("ERROR DE VALIDACIÓN")) {
+                    String mensaje = msg.split("\n")[0];
+                    JOptionPane.showMessageDialog(this, mensaje, "Error de Validación", JOptionPane.ERROR_MESSAGE);
+                } else if (msg != null && msg.contains("ERROR DE UNICIDAD")) {
+                    String mensaje = msg.split("\n")[0];
+                    JOptionPane.showMessageDialog(this, mensaje, "Error de Unicidad", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Error al agregar producto: " + msg);
+                }
             }
+            break;
         }
     }
 
@@ -182,28 +253,76 @@ public class ProductosGestionPanel extends JPanel {
                 "Precio Unitario:", precio,
                 "Stock:", stock
         };
-        int res = JOptionPane.showConfirmDialog(this, campos, "Modificar Producto", JOptionPane.OK_CANCEL_OPTION);
-        if (res == JOptionPane.OK_OPTION) {
+        while (true) {
+            int res = JOptionPane.showConfirmDialog(this, campos, "Modificar Producto", JOptionPane.OK_CANCEL_OPTION);
+            if (res != JOptionPane.OK_OPTION) return;
+
+            if (descp.getText().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "El campo Descripción es obligatorio.", "Validación", JOptionPane.WARNING_MESSAGE);
+                continue;
+            }
+            double precioVal = 0;
             try {
-                // Validación de stock: si vacío, negativo, decimal o no número, fuerza a 0
-                int stockVal = 0;
-                try {
-                    String stockTxt = stock.getText().trim();
-                    double stockDouble = Double.parseDouble(stockTxt);
-                    if (stockTxt.isEmpty() || stockDouble < 0 || stockDouble != Math.floor(stockDouble)) {
-                        stockVal = 0;
-                    } else {
-                        stockVal = (int) stockDouble;
-                    }
-                } catch (Exception ex) {
+                precioVal = Double.parseDouble(precio.getText().trim());
+                if (precioVal <= 0) throw new NumberFormatException();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "El campo Precio debe ser un número mayor a 0.", "Validación", JOptionPane.WARNING_MESSAGE);
+                continue;
+            }
+            String stockTxt = stock.getText().trim();
+            int stockVal = 0;
+            boolean stockAlerta = false;
+            boolean stockNegativo = false;
+            try {
+                double stockDouble = Double.parseDouble(stockTxt);
+                if (stockTxt.isEmpty() || stockDouble != Math.floor(stockDouble)) {
                     stockVal = 0;
+                    stockAlerta = true;
+                } else if (stockDouble < 0) {
+                    stockNegativo = true;
+                } else if (stockDouble == 0) {
+                    stockVal = 0;
+                    stockAlerta = true;
+                } else {
+                    stockVal = (int) stockDouble;
                 }
-                ProductoDB.modificarProducto(idServ, descp.getText(),
-                        Double.parseDouble(precio.getText()), stockVal);
+            } catch (Exception ex) {
+                stockVal = 0;
+                stockAlerta = true;
+            }
+            if (stockNegativo) {
+                int opt = JOptionPane.showConfirmDialog(this,
+                    "El stock no puede ser negativo.\n¿Desea cambiar el valor de stock?", "Stock Negativo", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                if (opt == JOptionPane.YES_OPTION) {
+                    continue;
+                } else {
+                    return;
+                }
+            }
+            if (stockAlerta) {
+                int confirm = JOptionPane.showConfirmDialog(this,
+                    "El stock ingresado es 0 o inválido.\n¿Está seguro de modificar el producto con stock 0?",
+                    "Confirmar Stock 0", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                if (confirm != JOptionPane.YES_OPTION) {
+                    continue;
+                }
+            }
+            try {
+                ProductoDB.modificarProducto(idServ, descp.getText(), precioVal, stockVal);
                 cargarProductos();
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Error al modificar producto: " + ex.getMessage());
+                String msg = ex.getMessage();
+                if (msg != null && msg.contains("ERROR DE VALIDACIÓN")) {
+                    String mensaje = msg.split("\n")[0];
+                    JOptionPane.showMessageDialog(this, mensaje, "Error de Validación", JOptionPane.ERROR_MESSAGE);
+                } else if (msg != null && msg.contains("ERROR DE UNICIDAD")) {
+                    String mensaje = msg.split("\n")[0];
+                    JOptionPane.showMessageDialog(this, mensaje, "Error de Unicidad", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Error al modificar producto: " + msg);
+                }
             }
+            break;
         }
     }
 
