@@ -5,10 +5,17 @@ import java.util.ArrayList;
 import java.util.List;
 import org.postgresql.jdbc.PgConnection;
 import org.postgresql.util.PGobject;
-import java.math.BigDecimal; // Importar para manejar tipos monetarios
+import java.math.BigDecimal;
 
+/**
+ * Clase de acceso a datos para operaciones CRUD y consultas sobre cotizaciones.
+ */
 public class CotizacionDB {
 
+    /**
+     * Lista todas las cotizaciones activas usando FN_LISTAR_COTIZACIONES().
+     * @return Lista de cotizaciones (NCOT, fecha, cliente, garantía).
+     */
     public static List<String[]> listarCotizaciones() throws SQLException {
         List<String[]> cotizaciones = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
@@ -27,6 +34,10 @@ public class CotizacionDB {
         return cotizaciones;
     }
 
+    /**
+     * Lista todas las cotizaciones desactivadas usando FN_LISTAR_COTIZACIONES_DESACTIVADAS().
+     * @return Lista de cotizaciones desactivadas.
+     */
     public static List<String[]> listarCotizacionesDesactivadas() throws SQLException {
         List<String[]> cotizaciones = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
@@ -45,6 +56,9 @@ public class CotizacionDB {
         return cotizaciones;
     }
 
+    /**
+     * Elimina lógicamente una cotización usando SP_ELIMINAR_LOGICO_COTIZACION.
+     */
     public static void eliminarLogicoCotizacion(String ncot) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
                 CallableStatement cs = conn.prepareCall("CALL SP_ELIMINAR_LOGICO_COTIZACION(?)")) {
@@ -53,6 +67,9 @@ public class CotizacionDB {
         }
     }
 
+    /**
+     * Reactiva una cotización desactivada usando SP_REACTIVAR_COTIZACION.
+     */
     public static void reactivarCotizacion(String ncot) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
                 CallableStatement cs = conn.prepareCall("CALL SP_REACTIVAR_COTIZACION(?)")) {
@@ -61,6 +78,9 @@ public class CotizacionDB {
         }
     }
 
+    /**
+     * Crea una cotización completa (cabecera y detalles) usando los procedimientos almacenados.
+     */
     public static void crearCotizacionCompleta(
             String ncot,
             int idCli,
@@ -116,6 +136,9 @@ public class CotizacionDB {
         }
     }
 
+    /**
+     * Modifica la cabecera de una cotización usando SP_MODIFICAR_CABECERA_COTIZACION.
+     */
     public static void modificarCabeceraCotizacion(
             String ncot,
             BigDecimal desct,
@@ -133,6 +156,10 @@ public class CotizacionDB {
         }
     }
 
+    /**
+     * Genera el siguiente número de cotización en formato "001-000001".
+     * @return Número de cotización generado.
+     */
     public static String generarNumeroCotizacion() throws SQLException {
         String ultimo = null;
         try (Connection conn = DatabaseConnection.getConnection();
@@ -154,8 +181,9 @@ public class CotizacionDB {
         return String.format("%03d-%06d", serie, correlativo);
     }
 
-    // Clase auxiliar para detalle (permanece igual, pero asegúrate de que el
-    // aplicativo use BigDecimal/Date en el llamado)
+    /**
+     * Clase auxiliar para representar el detalle de una cotización.
+     */
     public static class DetalleCotizacion implements java.io.Serializable {
         public String id_serv_in;
         public int cant_in;

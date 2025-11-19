@@ -4,8 +4,15 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Clase de acceso a datos para reportes y consultas analíticas sobre la base de datos.
+ */
 public class ReportesDB {
 
+    /**
+     * Reporte de stock disponible usando FN_REPORTE_STOCK_DISPONIBLE().
+     * @return Lista con id_serv, descp, stock, reservado, disponible.
+     */
     public static List<String[]> reporteStockDisponible() throws SQLException {
         List<String[]> reporte = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
@@ -25,6 +32,11 @@ public class ReportesDB {
         return reporte;
     }
 
+    /**
+     * Reporte de los productos más cotizados usando FN_TOP_PRODUCTOS_COTIZADOS.
+     * @param limite Número máximo de productos a mostrar.
+     * @return Lista con id_serv, descp, total_cant, valor_estimado.
+     */
     public static List<String[]> topProductosCotizados(int limite) throws SQLException {
         List<String[]> reporte = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
@@ -44,6 +56,11 @@ public class ReportesDB {
         return reporte;
     }
 
+    /**
+     * Historial de cotizaciones de un cliente usando FN_HISTORIAL_COTIZACIONES_CLIENTE.
+     * @param idCli ID del cliente.
+     * @return Lista con ncot, femi, items, subtotal, total.
+     */
     public static List<String[]> historialCotizacionesCliente(int idCli) throws SQLException {
         List<String[]> reporte = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
@@ -64,6 +81,11 @@ public class ReportesDB {
         return reporte;
     }
 
+    /**
+     * Reporte de alertas de vencimiento usando FN_ALERTAS_VENCIMIENTO.
+     * @param dias Número de días hasta el vencimiento.
+     * @return Lista con ncot, id_cli, femi, vofer, dias_restantes.
+     */
     public static List<String[]> alertasVencimiento(int dias) throws SQLException {
         List<String[]> reporte = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
@@ -84,6 +106,12 @@ public class ReportesDB {
         return reporte;
     }
 
+    /**
+     * Reporte de resumen mensual de totales usando FN_RESUMEN_MENSUAL_TOTALES.
+     * @param fechaInicio Fecha de inicio.
+     * @param fechaFin Fecha de fin.
+     * @return Lista con mes, num_cotizaciones, total_mes.
+     */
     public static List<String[]> resumenMensualTotales(Date fechaInicio, Date fechaFin) throws SQLException {
         List<String[]> reporte = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
@@ -103,6 +131,11 @@ public class ReportesDB {
         return reporte;
     }
 
+    /**
+     * Reporte de los clientes con mayor gasto usando FN_TOP_CLIENTES_POR_GASTO.
+     * @param limite Número máximo de clientes a mostrar.
+     * @return Lista con id_cli, cliente, num_cot, total_estimado.
+     */
     public static List<String[]> topClientesPorGasto(int limite) throws SQLException {
         List<String[]> reporte = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
@@ -122,6 +155,10 @@ public class ReportesDB {
         return reporte;
     }
 
+    /**
+     * Verifica la integridad de los detalles de cotización usando FN_VERIFICAR_INTEGRIDAD_DETALLE.
+     * @return Lista con id_det, ncot, id_serv, cant.
+     */
     public static List<String[]> verificarIntegridadDetalle() throws SQLException {
         List<String[]> reporte = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();

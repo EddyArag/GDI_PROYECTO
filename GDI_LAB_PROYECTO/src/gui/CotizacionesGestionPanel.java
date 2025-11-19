@@ -9,6 +9,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import dataBase.CotizacionDB;
 
+/**
+ * Panel para la gestión de cotizaciones: ver, eliminar, reactivar, modificar, actualizar y exportar PDF.
+ * Utiliza CotizacionDB para operaciones con la base de datos.
+ */
 public class CotizacionesGestionPanel extends JPanel {
     private JTable tablaCotizaciones;
     private DefaultTableModel modeloCotizaciones;
@@ -18,6 +22,9 @@ public class CotizacionesGestionPanel extends JPanel {
     private Color colorBorde = new Color(100, 160, 220);
     private Font fuenteCampos = new Font("Segoe UI", Font.PLAIN, 16);
 
+    /**
+     * Constructor: inicializa el panel, la tabla y los botones.
+     */
     public CotizacionesGestionPanel() {
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createTitledBorder(
@@ -79,6 +86,9 @@ public class CotizacionesGestionPanel extends JPanel {
         btnExportarPDF.addActionListener(e -> exportarCotizacionPDF());
     }
 
+    /**
+     * Carga las cotizaciones activas en la tabla.
+     */
     private void cargarCotizaciones() {
         modeloCotizaciones.setRowCount(0);
         try {
@@ -90,6 +100,9 @@ public class CotizacionesGestionPanel extends JPanel {
         }
     }
 
+    /**
+     * Muestra una ventana para reactivar cotizaciones desactivadas.
+     */
     private void mostrarVentanaReactivar() {
         JFrame frame = new JFrame("Reactivar Cotizaciones");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -123,6 +136,9 @@ public class CotizacionesGestionPanel extends JPanel {
         frame.setVisible(true);
     }
 
+    /**
+     * Elimina lógicamente la cotización seleccionada.
+     */
     private void eliminarCotizacion() {
         int fila = tablaCotizaciones.getSelectedRow();
         if (fila == -1)
@@ -140,6 +156,9 @@ public class CotizacionesGestionPanel extends JPanel {
         }
     }
 
+    /**
+     * Reactiva la cotización seleccionada.
+     */
     private void reactivarCotizacion() {
         int fila = tablaCotizaciones.getSelectedRow();
         if (fila == -1)
@@ -153,6 +172,9 @@ public class CotizacionesGestionPanel extends JPanel {
         }
     }
 
+    /**
+     * Muestra el formulario para modificar la cotización seleccionada.
+     */
     private void modificarCotizacion() {
         int fila = tablaCotizaciones.getSelectedRow();
         if (fila == -1)
@@ -166,6 +188,9 @@ public class CotizacionesGestionPanel extends JPanel {
         frame.setVisible(true);
     }
 
+    /**
+     * Muestra los detalles de la cotización seleccionada en un cuadro de diálogo.
+     */
     private void verCotizacionSeleccionada() {
         int fila = tablaCotizaciones.getSelectedRow();
         if (fila == -1) {
@@ -230,6 +255,9 @@ public class CotizacionesGestionPanel extends JPanel {
         JOptionPane.showMessageDialog(this, scroll, "Vista de Cotización", JOptionPane.INFORMATION_MESSAGE);
     }
 
+    /**
+     * Exporta la cotización seleccionada a PDF.
+     */
     private void exportarCotizacionPDF() {
         int fila = tablaCotizaciones.getSelectedRow();
         if (fila == -1) {

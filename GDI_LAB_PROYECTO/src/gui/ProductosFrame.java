@@ -6,6 +6,10 @@ import java.awt.*;
 import java.sql.*;
 import dataBase.ProductoDB;
 
+/**
+ * Ventana para seleccionar productos y agregarlos a la cotización.
+ * Utiliza ProductoDB para cargar productos y valida stock.
+ */
 public class ProductosFrame extends JFrame {
     private JTable tablaProductos;
     private DefaultTableModel modeloProductos;
@@ -64,6 +68,9 @@ public class ProductosFrame extends JFrame {
         btnAgregar.addActionListener(e -> agregarProducto());
     }
 
+    /**
+     * Carga los productos activos en la tabla.
+     */
     private void cargarProductos() {
         modeloProductos.setRowCount(0);
         try {
@@ -77,6 +84,9 @@ public class ProductosFrame extends JFrame {
         }
     }
 
+    /**
+     * Valida y agrega el producto seleccionado con la cantidad indicada.
+     */
     private void agregarProducto() {
         int fila = tablaProductos.getSelectedRow();
         if (fila == -1) {

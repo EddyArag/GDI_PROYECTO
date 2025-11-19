@@ -6,6 +6,10 @@ import java.awt.*;
 import java.sql.SQLException;
 import dataBase.ProductoDB;
 
+/**
+ * Panel para la gestión de productos/servicios: agregar, modificar, eliminar, reactivar y actualizar.
+ * Utiliza ProductoDB para operaciones con la base de datos.
+ */
 public class ProductosGestionPanel extends JPanel {
     private JTable tablaProductos;
     private DefaultTableModel modeloProductos;
@@ -15,6 +19,9 @@ public class ProductosGestionPanel extends JPanel {
     private Color colorBorde = new Color(100, 160, 220);
     private Font fuenteCampos = new Font("Segoe UI", Font.PLAIN, 16);
 
+    /**
+     * Constructor: inicializa el panel, la tabla y los botones.
+     */
     public ProductosGestionPanel() {
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createTitledBorder(
@@ -70,6 +77,9 @@ public class ProductosGestionPanel extends JPanel {
         btnActualizar.addActionListener(e -> cargarProductos());
     }
 
+    /**
+     * Carga los productos activos en la tabla.
+     */
     private void cargarProductos() {
         modeloProductos.setRowCount(0);
         try {
@@ -81,6 +91,9 @@ public class ProductosGestionPanel extends JPanel {
         }
     }
 
+    /**
+     * Muestra una ventana para reactivar productos desactivados.
+     */
     private void mostrarVentanaReactivar() {
         JFrame frame = new JFrame("Reactivar Productos");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -114,6 +127,9 @@ public class ProductosGestionPanel extends JPanel {
         frame.setVisible(true);
     }
 
+    /**
+     * Muestra un formulario para agregar un nuevo producto.
+     */
     private void agregarProducto() {
         JTextField idServ = new PlaceholderTextField("Ej: P001");
         JTextField descp = new PlaceholderTextField("Ej: Servicio de mantenimiento");
@@ -137,6 +153,9 @@ public class ProductosGestionPanel extends JPanel {
         }
     }
 
+    /**
+     * Muestra un formulario para modificar el producto seleccionado.
+     */
     private void modificarProducto() {
         int fila = tablaProductos.getSelectedRow();
         if (fila == -1)
@@ -162,6 +181,9 @@ public class ProductosGestionPanel extends JPanel {
         }
     }
 
+    /**
+     * Elimina lógicamente el producto seleccionado.
+     */
     private void eliminarProducto() {
         int fila = tablaProductos.getSelectedRow();
         if (fila == -1)
@@ -179,7 +201,9 @@ public class ProductosGestionPanel extends JPanel {
         }
     }
 
-    // Clase auxiliar para placeholder en JTextField
+    /**
+     * JTextField con placeholder para formularios.
+     */
     class PlaceholderTextField extends JTextField {
         private String placeholder;
         public PlaceholderTextField(String placeholder) {

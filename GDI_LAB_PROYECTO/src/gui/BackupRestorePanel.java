@@ -5,6 +5,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 
+/**
+ * Panel para exportar e importar backups de la base de datos PostgreSQL usando pg_dump y psql.
+ */
 public class BackupRestorePanel extends JPanel {
     private Color colorFondoPanel = new Color(220, 235, 250);
     private Color colorBorde = new Color(100, 160, 220);
@@ -35,6 +38,9 @@ public class BackupRestorePanel extends JPanel {
         btnImportBackup.addActionListener(this::importarBackup);
     }
 
+    /**
+     * Exporta la base de datos a un archivo usando pg_dump.
+     */
     private void exportarBackup(ActionEvent e) {
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle("Selecciona ubicación para guardar el backup");
@@ -59,6 +65,9 @@ public class BackupRestorePanel extends JPanel {
         }
     }
 
+    /**
+     * Importa un archivo de backup a la base de datos usando psql.
+     */
     private void importarBackup(ActionEvent e) {
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle("Selecciona el archivo de backup a restaurar");

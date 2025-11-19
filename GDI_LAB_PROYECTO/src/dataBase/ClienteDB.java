@@ -4,8 +4,15 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Clase de acceso a datos para operaciones CRUD y consultas sobre la entidad Cliente.
+ */
 public class ClienteDB {
 
+    /**
+     * Lista todos los clientes activos usando la función FN_LISTAR_CLIENTES().
+     * @return Lista de clientes (ID, nombre completo, RUC, observaciones).
+     */
     public static List<String[]> listarClientes() throws SQLException {
         List<String[]> clientes = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
@@ -24,6 +31,10 @@ public class ClienteDB {
         return clientes;
     }
 
+    /**
+     * Inserta un nuevo cliente usando el procedimiento almacenado SP_INSERTAR_CLIENTE.
+     * @return El ID generado para el nuevo cliente.
+     */
     public static int insertarCliente(String p_nomb, String ape_p, String ape_m, String ruc, String obs)
             throws SQLException {
         int nuevoId = -1;
@@ -45,6 +56,9 @@ public class ClienteDB {
         return nuevoId;
     }
 
+    /**
+     * Modifica los datos de un cliente existente usando SP_MODIFICAR_CLIENTE.
+     */
     public static void modificarCliente(int id, String p_nomb, String ape_p, String ape_m, String ruc, String obs)
             throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
@@ -59,6 +73,9 @@ public class ClienteDB {
         }
     }
 
+    /**
+     * Elimina lógicamente un cliente usando SP_ELIMINAR_LOGICO_CLIENTE.
+     */
     public static void eliminarLogicoCliente(int id) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
              CallableStatement cs = conn.prepareCall("CALL SP_ELIMINAR_LOGICO_CLIENTE(?)")) {
@@ -67,6 +84,9 @@ public class ClienteDB {
         }
     }
 
+    /**
+     * Reactiva un cliente desactivado usando SP_REACTIVAR_CLIENTE.
+     */
     public static void reactivarCliente(int id) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
                 CallableStatement cs = conn.prepareCall("CALL SP_REACTIVAR_CLIENTE(?)")) {
@@ -75,6 +95,10 @@ public class ClienteDB {
         }
     }
 
+    /**
+     * Obtiene las direcciones asociadas a un cliente usando FN_GET_DIRECCIONES_CLIENTE.
+     * @return Lista de direcciones (ID, dirección).
+     */
     public static List<String[]> getDireccionesCliente(int idCli) throws SQLException {
         List<String[]> direcciones = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
@@ -92,6 +116,10 @@ public class ClienteDB {
         return direcciones;
     }
 
+    /**
+     * Obtiene los teléfonos asociados a un cliente usando FN_GET_TELEFONOS_CLIENTE.
+     * @return Lista de teléfonos (ID, teléfono).
+     */
     public static List<String[]> getTelefonosCliente(int idCli) throws SQLException {
         List<String[]> telefonos = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
@@ -109,6 +137,10 @@ public class ClienteDB {
         return telefonos;
     }
 
+    /**
+     * Lista todos los clientes desactivados usando FN_LISTAR_CLIENTES_DESACTIVADOS().
+     * @return Lista de clientes desactivados.
+     */
     public static List<String[]> listarClientesDesactivados() throws SQLException {
         List<String[]> clientes = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();

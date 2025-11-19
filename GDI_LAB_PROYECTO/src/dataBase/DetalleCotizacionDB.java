@@ -4,8 +4,16 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Clase de acceso a datos para operaciones sobre los detalles de cotización.
+ */
 public class DetalleCotizacionDB {
 
+    /**
+     * Lista todas las líneas de detalle de una cotización usando FN_LINEAS_COTIZACION.
+     * @param ncot Número de cotización.
+     * @return Lista de detalles (ID, servicio, descripción, precio unitario, cantidad, total línea).
+     */
     public static List<String[]> listarLineasCotizacion(String ncot) throws SQLException {
         List<String[]> lineas = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
@@ -27,7 +35,9 @@ public class DetalleCotizacionDB {
         return lineas;
     }
 
-    // No modificar, solo usar para agregar detalles a cotizaciones reales.
+    /**
+     * Agrega un detalle a una cotización usando SP_AGREGAR_DETALLE.
+     */
     public static void agregarDetalle(String ncot, String idServ, int cant) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
                 CallableStatement cs = conn.prepareCall("CALL SP_AGREGAR_DETALLE(?, ?, ?)")) {
@@ -38,6 +48,9 @@ public class DetalleCotizacionDB {
         }
     }
 
+    /**
+     * Modifica un detalle de cotización usando SP_MODIFICAR_DETALLE.
+     */
     public static void modificarDetalle(int idDet, String ncot, String idServ, int cant) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
                 CallableStatement cs = conn.prepareCall("CALL SP_MODIFICAR_DETALLE(?, ?, ?, ?)")) {
@@ -49,6 +62,9 @@ public class DetalleCotizacionDB {
         }
     }
 
+    /**
+     * Elimina un detalle de cotización usando SP_ELIMINAR_DETALLE.
+     */
     public static void eliminarDetalle(int idDet, String ncot) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
                 CallableStatement cs = conn.prepareCall("CALL SP_ELIMINAR_DETALLE(?, ?)")) {

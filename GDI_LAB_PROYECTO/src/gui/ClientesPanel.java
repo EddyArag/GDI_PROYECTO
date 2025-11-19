@@ -6,6 +6,10 @@ import java.awt.*;
 import java.sql.SQLException;
 import dataBase.ClienteDB;
 
+/**
+ * Panel para la gestión de clientes: agregar, modificar, eliminar, reactivar y actualizar.
+ * Utiliza ClienteDB para operaciones con la base de datos.
+ */
 public class ClientesPanel extends JPanel {
     private JTable tablaClientes;
     private DefaultTableModel modeloClientes;
@@ -14,6 +18,9 @@ public class ClientesPanel extends JPanel {
     private Color colorBorde = new Color(100, 160, 220);
     private Font fuenteCampos = new Font("Segoe UI", Font.PLAIN, 16);
 
+    /**
+     * Constructor: inicializa el panel, la tabla y los botones.
+     */
     public ClientesPanel() {
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createTitledBorder(
@@ -69,6 +76,9 @@ public class ClientesPanel extends JPanel {
         btnReactivar.addActionListener(e -> mostrarVentanaReactivar());
     }
 
+    /**
+     * Carga los clientes activos en la tabla.
+     */
     private void cargarClientes() {
         modeloClientes.setRowCount(0);
         try {
@@ -80,6 +90,9 @@ public class ClientesPanel extends JPanel {
         }
     }
 
+    /**
+     * Muestra una ventana para reactivar clientes desactivados.
+     */
     private void mostrarVentanaReactivar() {
         JFrame frame = new JFrame("Reactivar Clientes");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -117,6 +130,9 @@ public class ClientesPanel extends JPanel {
         frame.setVisible(true);
     }
 
+    /**
+     * Muestra un formulario para agregar un nuevo cliente.
+     */
     private void agregarCliente() {
         JTextField nombre = new PlaceholderTextField("Ej: Juan");
         JTextField apeP = new PlaceholderTextField("Ej: Pérez");
@@ -142,6 +158,9 @@ public class ClientesPanel extends JPanel {
         }
     }
 
+    /**
+     * Muestra un formulario para modificar el cliente seleccionado.
+     */
     private void modificarCliente() {
         int fila = tablaClientes.getSelectedRow();
         if (fila == -1)
@@ -171,6 +190,9 @@ public class ClientesPanel extends JPanel {
         }
     }
 
+    /**
+     * Elimina lógicamente el cliente seleccionado.
+     */
     private void eliminarCliente() {
         int fila = tablaClientes.getSelectedRow();
         if (fila == -1)
@@ -188,7 +210,9 @@ public class ClientesPanel extends JPanel {
         }
     }
 
-    // Clase auxiliar para placeholder en JTextField
+    /**
+     * JTextField con placeholder para formularios.
+     */
     class PlaceholderTextField extends JTextField {
         private String placeholder;
         public PlaceholderTextField(String placeholder) {

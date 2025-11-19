@@ -1,5 +1,9 @@
 package dataBase;
 
+/**
+ * Clase de utilidad para obtener conexiones JDBC a la base de datos PostgreSQL.
+ * Configura los parámetros de conexión y expone un método estático para obtener la conexión.
+ */
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -13,6 +17,11 @@ public class DatabaseConnection {
     private static final String USER = "postgres";
     private static final String PASSWORD = "eddy";
 
+    /**
+     * Obtiene una conexión JDBC a la base de datos PostgreSQL.
+     * @return Connection activa a la base de datos.
+     * @throws SQLException si ocurre un error de conexión.
+     */
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(URL, USER, PASSWORD);
     }

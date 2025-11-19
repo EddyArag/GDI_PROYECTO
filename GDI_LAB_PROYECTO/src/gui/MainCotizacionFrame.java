@@ -45,6 +45,7 @@ public class MainCotizacionFrame extends JFrame {
 
     private JButton btnGenerarCotizacion;
 
+    // Cambia la variable para que sea persistente en la clase
     private int clienteSeleccionadoIndex = -1;
 
     // Colores y fuentes para la estética
@@ -511,27 +512,27 @@ public class MainCotizacionFrame extends JFrame {
         int prevIndex = clienteSeleccionadoIndex;
         comboClientes.removeAllItems();
         try (Connection conn = DatabaseConnection.getConnection();
-                Statement stmt = conn.createStatement();
-                ResultSet rs = stmt.executeQuery("SELECT id_cli, nombre_completo FROM FN_LISTAR_CLIENTES()")) {
+         Statement stmt = conn.createStatement();
+         ResultSet rs = stmt.executeQuery("SELECT id_cli, nombre_completo FROM FN_LISTAR_CLIENTES()")) {
             while (rs.next()) {
                 comboClientes.addItem(rs.getInt("id_cli") + " - " + rs.getString("nombre_completo"));
             }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Error al cargar clientes: " + ex.getMessage());
         }
-        // No seleccionar ninguno por defecto
-        comboClientes.setSelectedIndex(-1);
-        // Si había uno seleccionado antes, restaurarlo
+        // Mantén la selección previa si existe
         if (prevIndex >= 0 && prevIndex < comboClientes.getItemCount()) {
             comboClientes.setSelectedIndex(prevIndex);
+        } else if (comboClientes.getItemCount() > 0 && comboClientes.getSelectedIndex() == -1) {
+            comboClientes.setSelectedIndex(0);
         }
     }
 
     // Cargar datos del cliente seleccionado
     private void cargarDatosCliente() {
+        clienteSeleccionadoIndex = comboClientes.getSelectedIndex();
         String seleccionado = (String) comboClientes.getSelectedItem();
         if (seleccionado == null || !seleccionado.contains(" -")) {
-            // Si no hay cliente seleccionado, limpia los campos
             txtNombre.setText("");
             txtApellidoP.setText("");
             txtApellidoM.setText("");
@@ -541,7 +542,7 @@ public class MainCotizacionFrame extends JFrame {
         }
         int idCli = Integer.parseInt(seleccionado.split(" -")[0]);
         try (Connection conn = DatabaseConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement("SELECT * FROM Cliente WHERE ID_CLI = ?")) {
+         PreparedStatement ps = conn.prepareStatement("SELECT * FROM Cliente WHERE ID_CLI = ?")) {
             ps.setInt(1, idCli);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {

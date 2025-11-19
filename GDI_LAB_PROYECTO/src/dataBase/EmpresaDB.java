@@ -4,8 +4,14 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Clase de acceso a datos para operaciones sobre la entidad Empresa.
+ */
 public class EmpresaDB {
 
+    /**
+     * Modifica el logo de la empresa usando SP_MODIFICAR_LOGO_EMPRESA.
+     */
     public static void modificarLogoEmpresa(int idEmp, byte[] logo) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
                 CallableStatement cs = conn.prepareCall("{ call SP_MODIFICAR_LOGO_EMPRESA(?, ?) }")) {
@@ -15,6 +21,10 @@ public class EmpresaDB {
         }
     }
 
+    /**
+     * Obtiene las direcciones asociadas a la empresa usando FN_GET_DIRECCIONES_EMPRESA.
+     * @return Lista de direcciones (ID, dirección).
+     */
     public static List<String[]> getDireccionesEmpresa(int idEmp) throws SQLException {
         List<String[]> direcciones = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
@@ -32,6 +42,10 @@ public class EmpresaDB {
         return direcciones;
     }
 
+    /**
+     * Obtiene los teléfonos asociados a la empresa usando FN_GET_TELEFONOS_EMPRESA.
+     * @return Lista de teléfonos (ID, teléfono).
+     */
     public static List<String[]> getTelefonosEmpresa(int idEmp) throws SQLException {
         List<String[]> telefonos = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
@@ -49,6 +63,10 @@ public class EmpresaDB {
         return telefonos;
     }
 
+    /**
+     * Obtiene los correos electrónicos asociados a la empresa usando FN_GET_MAILS_EMPRESA.
+     * @return Lista de mails (ID, mail).
+     */
     public static List<String[]> getMailsEmpresa(int idEmp) throws SQLException {
         List<String[]> mails = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();

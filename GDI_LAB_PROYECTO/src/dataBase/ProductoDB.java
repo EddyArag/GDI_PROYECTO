@@ -4,8 +4,15 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Clase de acceso a datos para operaciones CRUD y consultas sobre productos/servicios.
+ */
 public class ProductoDB {
 
+    /**
+     * Lista todos los productos/servicios activos usando FN_LISTAR_SERVICIOS_PRODUCTOS().
+     * @return Lista de productos (ID, descripción, precio, stock).
+     */
     public static List<String[]> listarProductos() throws SQLException {
         List<String[]> productos = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
@@ -24,6 +31,9 @@ public class ProductoDB {
         return productos;
     }
 
+    /**
+     * Inserta un nuevo producto/servicio usando SP_INSERTAR_PRODUCTO.
+     */
     public static void insertarProducto(String idServ, String descp, double punit, int stock) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
                 CallableStatement cs = conn.prepareCall("CALL SP_INSERTAR_PRODUCTO(?, ?, ?, ?)")) {
@@ -35,6 +45,9 @@ public class ProductoDB {
         }
     }
 
+    /**
+     * Modifica los datos de un producto/servicio usando SP_MODIFICAR_PRODUCTO.
+     */
     public static void modificarProducto(String idServ, String descp, double punit, int stock) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
                 CallableStatement cs = conn.prepareCall("CALL SP_MODIFICAR_PRODUCTO(?, ?, ?, ?)")) {
@@ -46,6 +59,9 @@ public class ProductoDB {
         }
     }
 
+    /**
+     * Elimina lógicamente un producto/servicio usando SP_ELIMINAR_LOGICO_PRODUCTO.
+     */
     public static void eliminarLogicoProducto(String idServ) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
                 CallableStatement cs = conn.prepareCall("CALL SP_ELIMINAR_LOGICO_PRODUCTO(?)")) {
@@ -54,6 +70,9 @@ public class ProductoDB {
         }
     }
 
+    /**
+     * Reactiva un producto/servicio desactivado usando SP_REACTIVAR_PRODUCTO.
+     */
     public static void reactivarProducto(String idServ) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
                 CallableStatement cs = conn.prepareCall("CALL SP_REACTIVAR_PRODUCTO(?)")) {
@@ -62,6 +81,10 @@ public class ProductoDB {
         }
     }
 
+    /**
+     * Lista todos los productos/servicios desactivados usando FN_LISTAR_SERVICIOS_PRODUCTOS_DESACTIVADOS().
+     * @return Lista de productos desactivados.
+     */
     public static List<String[]> listarProductosDesactivados() throws SQLException {
         List<String[]> productos = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();

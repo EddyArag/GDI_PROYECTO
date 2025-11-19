@@ -16,7 +16,14 @@ import dataBase.ClienteDB;
 import dataBase.DetalleCotizacionDB;
 import javax.swing.JFileChooser;
 
+/**
+ * Clase utilitaria para exportar una cotización a PDF con formato profesional usando OpenPDF.
+ */
 public class ExportarCotizacionPDF {
+    /**
+     * Exporta la cotización indicada a un archivo PDF, solicitando ubicación al usuario.
+     * @param ncot Número de cotización.
+     */
     public static void exportar(String ncot) {
         try {
             // Selección de ubicación y nombre de archivo
@@ -326,8 +333,9 @@ public class ExportarCotizacionPDF {
     }
 }
 
-// Puedes crear una clase utilitaria NumeroALetras si no tienes una.
-// Ejemplo básico:
+/**
+ * Clase utilitaria para convertir números a letras (simplificado).
+ */
 class NumeroALetras {
     public static String convertir(long numero) {
         // Implementación simplificada, puedes usar una librería si lo deseas.
