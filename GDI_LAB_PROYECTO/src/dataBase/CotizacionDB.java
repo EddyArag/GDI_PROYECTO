@@ -133,6 +133,27 @@ public class CotizacionDB {
         }
     }
 
+    public static String generarNumeroCotizacion() throws SQLException {
+        String ultimo = null;
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT ncot FROM Cotizacion ORDER BY ncot DESC LIMIT 1")) {
+            if (rs.next()) {
+                ultimo = rs.getString("ncot");
+            }
+        }
+        // Si no hay cotizaciones, inicia en "001-000001"
+        if (ultimo == null || !ultimo.matches("\\d{3}-\\d{6}")) {
+            return "001-000001";
+        }
+        String[] partes = ultimo.split("-");
+        int serie = Integer.parseInt(partes[0]);
+        int correlativo = Integer.parseInt(partes[1]);
+        correlativo++;
+        // Si quieres que la serie cambie en algún momento, ajusta aquí
+        return String.format("%03d-%06d", serie, correlativo);
+    }
+
     // Clase auxiliar para detalle (permanece igual, pero asegúrate de que el
     // aplicativo use BigDecimal/Date en el llamado)
     public static class DetalleCotizacion implements java.io.Serializable {

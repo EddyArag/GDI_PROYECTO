@@ -90,11 +90,11 @@ public class ClientesPanel extends JPanel {
     }
 
     private void agregarCliente() {
-        JTextField nombre = new JTextField();
-        JTextField apeP = new JTextField();
-        JTextField apeM = new JTextField();
-        JTextField ruc = new JTextField();
-        JTextField obs = new JTextField();
+        JTextField nombre = new PlaceholderTextField("Ej: Juan");
+        JTextField apeP = new PlaceholderTextField("Ej: Pérez");
+        JTextField apeM = new PlaceholderTextField("Ej: Gómez");
+        JTextField ruc = new PlaceholderTextField("Ej: 20123456789");
+        JTextField obs = new PlaceholderTextField("Observaciones...");
         Object[] campos = {
                 "Nombre:", nombre,
                 "Apellido Paterno:", apeP,
@@ -156,6 +156,22 @@ public class ClientesPanel extends JPanel {
                 cargarClientes();
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(this, "Error al eliminar cliente: " + ex.getMessage());
+            }
+        }
+    }
+
+    // Clase auxiliar para placeholder en JTextField
+    class PlaceholderTextField extends JTextField {
+        private String placeholder;
+        public PlaceholderTextField(String placeholder) {
+            this.placeholder = placeholder;
+        }
+        @Override
+        protected void paintComponent(java.awt.Graphics g) {
+            super.paintComponent(g);
+            if (getText().isEmpty() && !(FocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == this)) {
+                g.setColor(Color.GRAY);
+                g.drawString(placeholder, 5, getHeight() - 7);
             }
         }
     }

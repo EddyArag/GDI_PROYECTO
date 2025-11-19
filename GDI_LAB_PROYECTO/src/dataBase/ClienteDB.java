@@ -28,13 +28,17 @@ public class ClienteDB {
             throws SQLException {
         int nuevoId = -1;
         try (Connection conn = DatabaseConnection.getConnection();
-                CallableStatement cs = conn.prepareCall("{ call SP_INSERTAR_CLIENTE(?, ?, ?, ?, ?, ?) }")) {
-            cs.setString(1, p_nomb);
-            cs.setString(2, ape_p);
-            cs.setString(3, ape_m);
-            cs.setString(4, ruc);
-            cs.setString(5, obs);
-            cs.registerOutParameter(6, Types.INTEGER);
+             CallableStatement cs = conn.prepareCall("CALL SP_INSERTAR_CLIENTE(?, ?, ?, ?, ?, ?)")) {
+            cs.setString(1, p_nomb); // VARCHAR(50)
+            cs.setString(2, ape_p);  // VARCHAR(50)
+            cs.setString(3, ape_m);  // VARCHAR(50)
+            if (ruc == null || ruc.trim().isEmpty()) {
+                cs.setNull(4, Types.CHAR); // CHAR(11) - manda null si no hay RUC
+            } else {
+                cs.setString(4, ruc);      // CHAR(11)
+            }
+            cs.setString(5, obs);    // VARCHAR(200)
+            cs.registerOutParameter(6, Types.INTEGER); // OUT p_new_id_cli INT
             cs.execute();
             nuevoId = cs.getInt(6);
         }
@@ -44,20 +48,20 @@ public class ClienteDB {
     public static void modificarCliente(int id, String p_nomb, String ape_p, String ape_m, String ruc, String obs)
             throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
-                CallableStatement cs = conn.prepareCall("{ call SP_MODIFICAR_CLIENTE(?, ?, ?, ?, ?, ?) }")) {
-            cs.setInt(1, id);
-            cs.setString(2, p_nomb);
-            cs.setString(3, ape_p);
-            cs.setString(4, ape_m);
-            cs.setString(5, ruc);
-            cs.setString(6, obs);
+             CallableStatement cs = conn.prepareCall("CALL SP_MODIFICAR_CLIENTE(?, ?, ?, ?, ?, ?)")) {
+            cs.setInt(1, id);        // INT
+            cs.setString(2, p_nomb); // VARCHAR(50)
+            cs.setString(3, ape_p);  // VARCHAR(50)
+            cs.setString(4, ape_m);  // VARCHAR(50)
+            cs.setString(5, ruc);    // CHAR(11)
+            cs.setString(6, obs);    // VARCHAR(200)
             cs.execute();
         }
     }
 
     public static void eliminarLogicoCliente(int id) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
-                CallableStatement cs = conn.prepareCall("CALL SP_ELIMINAR_LOGICO_CLIENTE(?)")) {
+             CallableStatement cs = conn.prepareCall("CALL SP_ELIMINAR_LOGICO_CLIENTE(?)")) {
             cs.setInt(1, id);
             cs.execute();
         }

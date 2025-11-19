@@ -27,10 +27,10 @@ public class ProductoDB {
     public static void insertarProducto(String idServ, String descp, double punit, int stock) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
                 CallableStatement cs = conn.prepareCall("CALL SP_INSERTAR_PRODUCTO(?, ?, ?, ?)")) {
-            cs.setString(1, String.format("%-4s", idServ));
-            cs.setString(2, descp);
-            cs.setDouble(3, punit);
-            cs.setInt(4, stock);
+            cs.setString(1, String.format("%-4s", idServ)); // CHAR(4)
+            cs.setString(2, descp);                         // VARCHAR(200)
+            cs.setBigDecimal(3, new java.math.BigDecimal(punit).setScale(2)); // DECIMAL(7,2)
+            cs.setInt(4, stock);                            // INT
             cs.execute();
         }
     }
@@ -38,10 +38,10 @@ public class ProductoDB {
     public static void modificarProducto(String idServ, String descp, double punit, int stock) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
                 CallableStatement cs = conn.prepareCall("CALL SP_MODIFICAR_PRODUCTO(?, ?, ?, ?)")) {
-            cs.setString(1, String.format("%-4s", idServ));
-            cs.setString(2, descp);
-            cs.setDouble(3, punit);
-            cs.setInt(4, stock);
+            cs.setString(1, String.format("%-4s", idServ)); // CHAR(4)
+            cs.setString(2, descp);                         // VARCHAR(200)
+            cs.setBigDecimal(3, new java.math.BigDecimal(punit).setScale(2)); // DECIMAL(7,2)
+            cs.setInt(4, stock);                            // INT
             cs.execute();
         }
     }
@@ -49,7 +49,7 @@ public class ProductoDB {
     public static void eliminarLogicoProducto(String idServ) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
                 CallableStatement cs = conn.prepareCall("CALL SP_ELIMINAR_LOGICO_PRODUCTO(?)")) {
-            cs.setString(1, String.format("%-4s", idServ));
+            cs.setString(1, String.format("%-4s", idServ)); // CHAR(4)
             cs.execute();
         }
     }

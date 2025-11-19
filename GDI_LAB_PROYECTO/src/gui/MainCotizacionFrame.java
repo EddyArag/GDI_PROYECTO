@@ -43,6 +43,8 @@ public class MainCotizacionFrame extends JFrame {
 
     private JButton btnGenerarCotizacion;
 
+    private int clienteSeleccionadoIndex = -1;
+
     public MainCotizacionFrame() {
         setTitle("Generar Cotización");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -150,9 +152,15 @@ public class MainCotizacionFrame extends JFrame {
         txtRUC = new JTextField();
         txtObs = new JTextField();
 
+        // Inicialmente los campos están vacíos
+        txtNombre.setText("");
+        txtApellidoP.setText("");
+        txtApellidoM.setText("");
+        txtRUC.setText("");
+        txtObs.setText("");
+
         panel.add(new JLabel("Seleccionar Cliente:"));
         panel.add(comboClientes);
-        // Elimina el botón de actualizar
         panel.add(new JLabel("Nombre:"));
         panel.add(txtNombre);
         panel.add(new JLabel("Apellido Paterno:"));
@@ -173,16 +181,50 @@ public class MainCotizacionFrame extends JFrame {
         return panel;
     }
 
+    // Clase auxiliar para placeholder en JTextField (solo para cotización)
+    class PlaceholderTextField extends JTextField {
+        private String placeholder;
+
+        public PlaceholderTextField(String placeholder) {
+            this.placeholder = placeholder;
+        }
+
+        @Override
+        protected void paintComponent(java.awt.Graphics g) {
+            super.paintComponent(g);
+            if (getText().isEmpty() && !(FocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == this)) {
+                g.setColor(Color.GRAY);
+                g.drawString(placeholder, 5, getHeight() - 7);
+            }
+        }
+    }
+
     private JPanel crearPanelCotizacion() {
         JPanel panel = new JPanel(new GridLayout(2, 6, 5, 5));
         panel.setBorder(BorderFactory.createTitledBorder("Datos de la Cotización"));
 
-        txtFecha = new JTextField();
-        txtCond = new JTextField();
-        txtGarantia = new JTextField();
-        txtTentativa = new JTextField();
-        txtValidez = new JTextField();
-        txtDescuento = new JTextField("0.00"); // Campo descuento
+        txtFecha = new PlaceholderTextField("AAAA-MM-DD");
+        txtCond = new PlaceholderTextField("Ej: Pago contado, transferencia...");
+        txtGarantia = new PlaceholderTextField("Servicio/Piezas: 6 meses, Equipo completo: 1 año");
+        txtTentativa = new PlaceholderTextField("Ej: 7 días hábiles");
+        txtValidez = new PlaceholderTextField("AAAA-MM-DD");
+        txtDescuento = new PlaceholderTextField("0.00");
+
+        // Haz los campos más grandes visualmente
+        txtCond.setColumns(15);
+        txtGarantia.setColumns(25);
+        txtTentativa.setColumns(15);
+        txtValidez.setColumns(10);
+        txtDescuento.setColumns(8);
+
+        txtCond.setPreferredSize(new Dimension(180, 28));
+        txtGarantia.setPreferredSize(new Dimension(300, 28));
+        txtTentativa.setPreferredSize(new Dimension(180, 28));
+        txtValidez.setPreferredSize(new Dimension(120, 28));
+        txtDescuento.setPreferredSize(new Dimension(100, 28));
+
+        txtFecha.setText(java.time.LocalDate.now().toString());
+        txtGarantia.setText("Servicio/Piezas: 6 meses, Equipo completo: 1 año");
 
         panel.add(new JLabel("Fecha Emisión:"));
         panel.add(txtFecha);
@@ -271,8 +313,12 @@ public class MainCotizacionFrame extends JFrame {
     }
 
     private void abrirProductosFrame() {
+        // Guarda el índice seleccionado antes de abrir el frame de productos
+        clienteSeleccionadoIndex = comboClientes.getSelectedIndex();
         ProductosFrame frame = new ProductosFrame((idServ, nombre, precio, cantidad) -> {
             agregarProductoADetalle(idServ, nombre, precio, cantidad);
+            // Al volver, restaura el cliente seleccionado
+            comboClientes.setSelectedIndex(clienteSeleccionadoIndex);
         });
         frame.setVisible(true);
     }
@@ -375,24 +421,38 @@ public class MainCotizacionFrame extends JFrame {
 
     // Cargar clientes desde la base de datos usando FN_LISTAR_CLIENTES
     private void cargarClientes() {
+        int prevIndex = clienteSeleccionadoIndex;
+        comboClientes.removeAllItems();
         try (Connection conn = DatabaseConnection.getConnection();
                 Statement stmt = conn.createStatement();
                 ResultSet rs = stmt.executeQuery("SELECT id_cli, nombre_completo FROM FN_LISTAR_CLIENTES()")) {
-            comboClientes.removeAllItems();
             while (rs.next()) {
                 comboClientes.addItem(rs.getInt("id_cli") + " - " + rs.getString("nombre_completo"));
             }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Error al cargar clientes: " + ex.getMessage());
         }
+        // No seleccionar ninguno por defecto
+        comboClientes.setSelectedIndex(-1);
+        // Si había uno seleccionado antes, restaurarlo
+        if (prevIndex >= 0 && prevIndex < comboClientes.getItemCount()) {
+            comboClientes.setSelectedIndex(prevIndex);
+        }
     }
 
     // Cargar datos del cliente seleccionado
     private void cargarDatosCliente() {
         String seleccionado = (String) comboClientes.getSelectedItem();
-        if (seleccionado == null || !seleccionado.contains(" - "))
+        if (seleccionado == null || !seleccionado.contains(" -")) {
+            // Si no hay cliente seleccionado, limpia los campos
+            txtNombre.setText("");
+            txtApellidoP.setText("");
+            txtApellidoM.setText("");
+            txtRUC.setText("");
+            txtObs.setText("");
             return;
-        int idCli = Integer.parseInt(seleccionado.split(" - ")[0]);
+        }
+        int idCli = Integer.parseInt(seleccionado.split(" -")[0]);
         try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement ps = conn.prepareStatement("SELECT * FROM Cliente WHERE ID_CLI = ?")) {
             ps.setInt(1, idCli);
@@ -410,9 +470,13 @@ public class MainCotizacionFrame extends JFrame {
     }
 
     private void generarCotizacion() {
-        String ncot = JOptionPane.showInputDialog(this, "Ingrese el número de cotización:");
-        if (ncot == null || ncot.trim().isEmpty())
+        String ncot;
+        try {
+            ncot = dataBase.CotizacionDB.generarNumeroCotizacion();
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al generar número de cotización: " + ex.getMessage());
             return;
+        }
 
         String seleccionado = (String) comboClientes.getSelectedItem();
         if (seleccionado == null || !seleccionado.contains(" - ")) {

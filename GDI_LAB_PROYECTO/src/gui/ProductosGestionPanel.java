@@ -86,10 +86,10 @@ public class ProductosGestionPanel extends JPanel {
     }
 
     private void agregarProducto() {
-        JTextField idServ = new JTextField();
-        JTextField descp = new JTextField();
-        JTextField precio = new JTextField();
-        JTextField stock = new JTextField();
+        JTextField idServ = new PlaceholderTextField("Ej: P001");
+        JTextField descp = new PlaceholderTextField("Ej: Servicio de mantenimiento");
+        JTextField precio = new PlaceholderTextField("Ej: 150.00");
+        JTextField stock = new PlaceholderTextField("Ej: 10");
         Object[] campos = {
                 "ID:", idServ,
                 "Descripción:", descp,
@@ -146,6 +146,22 @@ public class ProductosGestionPanel extends JPanel {
                 cargarProductos();
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(this, "Error al eliminar producto: " + ex.getMessage());
+            }
+        }
+    }
+
+    // Clase auxiliar para placeholder en JTextField
+    class PlaceholderTextField extends JTextField {
+        private String placeholder;
+        public PlaceholderTextField(String placeholder) {
+            this.placeholder = placeholder;
+        }
+        @Override
+        protected void paintComponent(java.awt.Graphics g) {
+            super.paintComponent(g);
+            if (getText().isEmpty() && !(FocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == this)) {
+                g.setColor(Color.GRAY);
+                g.drawString(placeholder, 5, getHeight() - 7);
             }
         }
     }
