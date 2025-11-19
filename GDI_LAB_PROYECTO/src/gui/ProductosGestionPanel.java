@@ -144,8 +144,21 @@ public class ProductosGestionPanel extends JPanel {
         int res = JOptionPane.showConfirmDialog(this, campos, "Nuevo Producto", JOptionPane.OK_CANCEL_OPTION);
         if (res == JOptionPane.OK_OPTION) {
             try {
+                // Validación de stock: si vacío, negativo, decimal o no número, fuerza a 0
+                int stockVal = 0;
+                try {
+                    String stockTxt = stock.getText().trim();
+                    double stockDouble = Double.parseDouble(stockTxt);
+                    if (stockTxt.isEmpty() || stockDouble < 0 || stockDouble != Math.floor(stockDouble)) {
+                        stockVal = 0;
+                    } else {
+                        stockVal = (int) stockDouble;
+                    }
+                } catch (Exception ex) {
+                    stockVal = 0;
+                }
                 ProductoDB.insertarProducto(idServ.getText(), descp.getText(),
-                        Double.parseDouble(precio.getText()), Integer.parseInt(stock.getText()));
+                        Double.parseDouble(precio.getText()), stockVal);
                 cargarProductos();
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Error al agregar producto: " + ex.getMessage());
@@ -172,8 +185,21 @@ public class ProductosGestionPanel extends JPanel {
         int res = JOptionPane.showConfirmDialog(this, campos, "Modificar Producto", JOptionPane.OK_CANCEL_OPTION);
         if (res == JOptionPane.OK_OPTION) {
             try {
+                // Validación de stock: si vacío, negativo, decimal o no número, fuerza a 0
+                int stockVal = 0;
+                try {
+                    String stockTxt = stock.getText().trim();
+                    double stockDouble = Double.parseDouble(stockTxt);
+                    if (stockTxt.isEmpty() || stockDouble < 0 || stockDouble != Math.floor(stockDouble)) {
+                        stockVal = 0;
+                    } else {
+                        stockVal = (int) stockDouble;
+                    }
+                } catch (Exception ex) {
+                    stockVal = 0;
+                }
                 ProductoDB.modificarProducto(idServ, descp.getText(),
-                        Double.parseDouble(precio.getText()), Integer.parseInt(stock.getText()));
+                        Double.parseDouble(precio.getText()), stockVal);
                 cargarProductos();
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Error al modificar producto: " + ex.getMessage());
