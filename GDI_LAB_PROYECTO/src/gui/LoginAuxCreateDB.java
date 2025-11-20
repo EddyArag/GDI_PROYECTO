@@ -1,12 +1,11 @@
 package gui;
 
-import javax.swing.*;
 import java.awt.*;
-import java.util.function.BiConsumer;
+import javax.swing.*;
 
 public class LoginAuxCreateDB extends JDialog {
     public interface CreateDBCallback {
-        void onCreate(String port, String password);
+        void onCreate(String port, String user, String password);
     }
 
     public static void showDialog(CreateDBCallback callback) {
@@ -17,19 +16,22 @@ public class LoginAuxCreateDB extends JDialog {
 
     public LoginAuxCreateDB(CreateDBCallback callback) {
         setTitle("Crear Base de Datos (Postgres)");
-        setSize(350, 200);
+        setSize(380, 230);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        JPanel panel = new JPanel(new GridLayout(3, 2, 8, 8));
+        JPanel panel = new JPanel(new GridLayout(4, 2, 8, 8));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         JTextField txtPort = new JTextField("5432");
+        JTextField txtUser = new JTextField("postgres"); // <-- nuevo campo editable
         JPasswordField txtPass = new JPasswordField();
 
         panel.add(new JLabel("Puerto:"));
         panel.add(txtPort);
-        panel.add(new JLabel("Contraseña (postgres):"));
+        panel.add(new JLabel("Usuario (admin):"));
+        panel.add(txtUser);
+        panel.add(new JLabel("Contraseña (admin):"));
         panel.add(txtPass);
 
         JButton btnCrear = new JButton("Crear BD y Estructura");
@@ -40,12 +42,13 @@ public class LoginAuxCreateDB extends JDialog {
 
         btnCrear.addActionListener(e -> {
             String port = txtPort.getText().trim();
+            String user = txtUser.getText().trim();
             String pass = new String(txtPass.getPassword());
-            if (port.isEmpty() || pass.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Debe ingresar puerto y contraseña.");
+            if (port.isEmpty() || user.isEmpty() || pass.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Debe ingresar puerto, usuario y contraseña.");
                 return;
             }
-            callback.onCreate(port, pass);
+            callback.onCreate(port, user, pass);
             JOptionPane.showMessageDialog(this, "Creación y carga iniciada. Espere unos segundos.");
             dispose();
         });

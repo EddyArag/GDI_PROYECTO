@@ -5,7 +5,6 @@ package dataBase;
  * Configura los parámetros de conexión y expone un método estático para obtener la conexión.
  */
 import gui.PanelLoginAux;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -39,21 +38,21 @@ public class DatabaseConnection {
                 // Verifica si la base existe usando usuario postgres (no innova)
                 boolean bdExiste = existeBaseDatos(host, portHolder[0], dbName, "postgres", "Soft123!");
                 if (!bdExiste) {
-                    // Crea la base usando usuario postgres
+                    // Crea la base usando usuario admin provisto por el usuario
                     final boolean[] creado = {false};
-                    gui.LoginAuxCreateDB.showDialog((p, password) -> {
-                        dataBase.CreadorCompletoDB.crearTodo(p, password);
+                    gui.LoginAuxCreateDB.showDialog((p, adminUser, password) -> {
+                        dataBase.CreadorCompletoDB.crearTodo(p, adminUser, password);
                         portHolder[0] = p;
                         URL = String.format("jdbc:postgresql://%s:%s/%s", host, portHolder[0], dbName);
-                        // Verifica si la base se creó correctamente
-                        if (existeBaseDatos(host, portHolder[0], dbName, "postgres", password)) {
+                        // Verifica si la base se creó correctamente usando las credenciales admin ingresadas
+                        if (existeBaseDatos(host, portHolder[0], dbName, adminUser, password)) {
                             creado[0] = true;
                         }
                     });
                     try { Thread.sleep(1000); } catch (InterruptedException ignore) {}
                     // Solo muestra error si realmente NO se creó la base
                     if (!creado[0]) {
-                        javax.swing.JOptionPane.showMessageDialog(null, "No se pudo crear la base de datos. Verifique el puerto y la contraseña de postgres.");
+                        javax.swing.JOptionPane.showMessageDialog(null, "No se pudo crear la base de datos. Verifique el puerto y las credenciales de administrador.");
                         throw new SQLException("No se pudo crear la base de datos.");
                     }
                     // Ahora intenta conectar usando innova (usuario de la aplicación)

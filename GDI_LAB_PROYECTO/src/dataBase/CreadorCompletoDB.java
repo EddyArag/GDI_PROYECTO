@@ -2,21 +2,21 @@ package dataBase;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import javax.swing.JOptionPane;
 
 public class CreadorCompletoDB {
     /**
      * Crea toda la estructura de la base de datos y datos iniciales.
-     * Este método debe ejecutarse usando usuario postgres y la contraseña correspondiente.
+     * Este método debe ejecutarse usando el usuario admin (p.ej. postgres) y la contraseña correspondiente.
      * @param port Puerto de conexión a PostgreSQL.
-     * @param password Contraseña del usuario postgres.
+     * @param adminUser Usuario administrador (antes estaba fijo "postgres").
+     * @param password Contraseña del usuario admin.
      */
-    public static void crearTodo(String port, String password) {
+    public static void crearTodo(String port, String adminUser, String password) {
         Connection conn = null;
         try {
-            // 1. Conexión como postgres para crear rol y base de datos
+            // 1. Conexión como admin para crear rol y base de datos
             String urlAdmin = String.format("jdbc:postgresql://localhost:%s/postgres", port);
-            conn = DriverManager.getConnection(urlAdmin, "postgres", password);
+            conn = DriverManager.getConnection(urlAdmin, adminUser, password);
 
             // 2. Crear rol innova y darle permisos
             dataBase.CargaDb1.ejecutar(conn);
@@ -51,7 +51,7 @@ public class CreadorCompletoDB {
             }
         } catch (Exception ex) {
             javax.swing.JOptionPane.showMessageDialog(null,
-                "No se pudo conectar a postgres con el puerto y contraseña ingresados.\nVerifique los datos e intente nuevamente.");
+                "No se pudo conectar al servidor con el puerto, usuario o contraseña ingresados.\nVerifique los datos e intente nuevamente.");
         }
     }
 }
