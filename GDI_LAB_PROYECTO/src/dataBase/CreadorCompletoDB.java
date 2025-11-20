@@ -50,8 +50,8 @@ public class CreadorCompletoDB {
                 try { if (connNueva != null) connNueva.close(); } catch (Exception ignore) {}
             }
         } catch (Exception ex) {
-            javax.swing.JOptionPane.showMessageDialog(null,
-                "No se pudo conectar al servidor con el puerto, usuario o contraseña ingresados.\nVerifique los datos e intente nuevamente.");
+            // No mostrar más ventanas, solo lanza excepción para que DatabaseConnection lo maneje
+            throw new RuntimeException("Error de conexión admin.");
         }
     }
 }

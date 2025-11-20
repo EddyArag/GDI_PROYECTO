@@ -16,40 +16,79 @@ public class LoginAuxCreateDB extends JDialog {
 
     public LoginAuxCreateDB(CreateDBCallback callback) {
         setTitle("Crear Base de Datos (Postgres)");
-        setSize(380, 230);
+        setSize(400, 260);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        JPanel panel = new JPanel(new GridLayout(4, 2, 8, 8));
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        // Estética mejorada
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(new Color(100, 160, 220), 2, true),
+            "Datos de conexión administrador", 0, 0, new Font("Segoe UI", Font.BOLD, 15), new Color(100, 160, 220)
+        ));
+        panel.setBackground(new Color(220, 235, 250));
 
-        JTextField txtPort = new JTextField("5432");
-        JTextField txtUser = new JTextField("postgres"); // <-- nuevo campo editable
-        JPasswordField txtPass = new JPasswordField();
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.anchor = GridBagConstraints.WEST;
 
-        panel.add(new JLabel("Puerto:"));
-        panel.add(txtPort);
-        panel.add(new JLabel("Usuario (admin):"));
-        panel.add(txtUser);
-        panel.add(new JLabel("Contraseña (admin):"));
-        panel.add(txtPass);
+        JLabel lblPort = new JLabel("Puerto:");
+        lblPort.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        JTextField txtPort = new JTextField("5432", 10);
+        txtPort.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+
+        JLabel lblUser = new JLabel("Usuario (admin):");
+        lblUser.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        JTextField txtUser = new JTextField("postgres", 10);
+        txtUser.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+
+        JLabel lblPass = new JLabel("Contraseña (admin):");
+        lblPass.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        JPasswordField txtPass = new JPasswordField(10);
+        txtPass.setFont(new Font("Segoe UI", Font.PLAIN, 15));
 
         JButton btnCrear = new JButton("Crear BD y Estructura");
-        panel.add(new JLabel());
-        panel.add(btnCrear);
+        btnCrear.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        btnCrear.setBackground(new Color(100, 160, 220));
+        btnCrear.setForeground(Color.WHITE);
+
+        gbc.gridx = 0; gbc.gridy = 0;
+        panel.add(lblPort, gbc);
+        gbc.gridx = 1;
+        panel.add(txtPort, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 1;
+        panel.add(lblUser, gbc);
+        gbc.gridx = 1;
+        panel.add(txtUser, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 2;
+        panel.add(lblPass, gbc);
+        gbc.gridx = 1;
+        panel.add(txtPass, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 2; gbc.anchor = GridBagConstraints.CENTER;
+        panel.add(btnCrear, gbc);
 
         add(panel, BorderLayout.CENTER);
+
+        // Mensaje de error (solo si ocurre)
+        JLabel lblError = new JLabel();
+        lblError.setForeground(Color.RED);
+        lblError.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        lblError.setHorizontalAlignment(SwingConstants.CENTER);
+        add(lblError, BorderLayout.SOUTH);
 
         btnCrear.addActionListener(e -> {
             String port = txtPort.getText().trim();
             String user = txtUser.getText().trim();
             String pass = new String(txtPass.getPassword());
             if (port.isEmpty() || user.isEmpty() || pass.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Debe ingresar puerto, usuario y contraseña.");
+                lblError.setText("Debe ingresar puerto, usuario y contraseña.");
                 return;
             }
+            // No mostrar mensaje de "Creación y carga iniciada" aquí, solo cerrar el diálogo
             callback.onCreate(port, user, pass);
-            JOptionPane.showMessageDialog(this, "Creación y carga iniciada. Espere unos segundos.");
             dispose();
         });
     }

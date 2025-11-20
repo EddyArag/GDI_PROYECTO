@@ -40,16 +40,26 @@ public class DatabaseConnection {
                 if (!bdExiste) {
                     // Crea la base usando usuario admin provisto por el usuario
                     final boolean[] creado = {false};
+                    final boolean[] errorAdmin = {false};
                     gui.LoginAuxCreateDB.showDialog((p, adminUser, password) -> {
-                        dataBase.CreadorCompletoDB.crearTodo(p, adminUser, password);
-                        portHolder[0] = p;
-                        URL = String.format("jdbc:postgresql://%s:%s/%s", host, portHolder[0], dbName);
-                        // Verifica si la base se creó correctamente usando las credenciales admin ingresadas
-                        if (existeBaseDatos(host, portHolder[0], dbName, adminUser, password)) {
-                            creado[0] = true;
+                        try {
+                            dataBase.CreadorCompletoDB.crearTodo(p, adminUser, password);
+                            portHolder[0] = p;
+                            URL = String.format("jdbc:postgresql://%s:%s/%s", host, portHolder[0], dbName);
+                            // Verifica si la base se creó correctamente usando las credenciales admin ingresadas
+                            if (existeBaseDatos(host, portHolder[0], dbName, adminUser, password)) {
+                                creado[0] = true;
+                            }
+                        } catch (Exception e) {
+                            errorAdmin[0] = true;
                         }
                     });
                     try { Thread.sleep(1000); } catch (InterruptedException ignore) {}
+                    // Si hubo error de admin, muestra solo ese error y detén el flujo
+                    if (errorAdmin[0]) {
+                        javax.swing.JOptionPane.showMessageDialog(null, "No se pudo conectar al servidor con el puerto, usuario o contraseña ingresados.\nVerifique los datos e intente nuevamente.");
+                        throw new SQLException("Error de conexión admin.");
+                    }
                     // Solo muestra error si realmente NO se creó la base
                     if (!creado[0]) {
                         javax.swing.JOptionPane.showMessageDialog(null, "No se pudo crear la base de datos. Verifique el puerto y las credenciales de administrador.");
@@ -78,6 +88,10 @@ public class DatabaseConnection {
             }
             return conn;
         } catch (SQLException ex) {
+            // Si el error fue por admin, no mostrar más ventanas
+            if (ex.getMessage() != null && ex.getMessage().contains("Error de conexión admin.")) {
+                throw ex;
+            }
             // Solo maneja error de puerto aquí
             String currentPort = portHolder[0];
             int opt = javax.swing.JOptionPane.showConfirmDialog(null,
