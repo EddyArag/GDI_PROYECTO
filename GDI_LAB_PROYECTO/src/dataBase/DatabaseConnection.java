@@ -27,60 +27,76 @@ public class DatabaseConnection {
      */
     public static Connection getConnection() throws SQLException {
         Connection conn = null;
+        String host = getHostFromUrl();
+        String[] portHolder = new String[] { getPortFromUrl() };
+        String dbName = getDbNameFromUrl();
+
         try {
-            conn = DriverManager.getConnection(URL, USER, PASSWORD);
-            // Ejecuta CargaDb1 siempre (rol innova)
-            CargaDb1.ejecutar(conn);
-            // Verifica estructura mínima
-            if (!verificarEstructura(conn)) {
-                // Si la estructura no existe, verifica si la base existe
-                if (!existeBaseDatos(getHostFromUrl(), getPortFromUrl(), getDbNameFromUrl(), USER, PASSWORD)) {
-                    // Conecta a postgres y ejecuta CargaDb2 (crear base)
-                    try (Connection connPostgres = DriverManager.getConnection(
-                            String.format("jdbc:postgresql://%s:%s/postgres", getHostFromUrl(), getPortFromUrl()), USER, PASSWORD)) {
-                        CargaDb2.ejecutar(connPostgres);
+            // Intenta conectar directamente
+            try {
+                conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            } catch (SQLException ex) {
+                // Verifica si la base existe usando usuario postgres (no innova)
+                boolean bdExiste = existeBaseDatos(host, portHolder[0], dbName, "postgres", "Soft123!");
+                if (!bdExiste) {
+                    // Crea la base usando usuario postgres
+                    final boolean[] creado = {false};
+                    gui.LoginAuxCreateDB.showDialog((p, password) -> {
+                        dataBase.CreadorCompletoDB.crearTodo(p, password);
+                        portHolder[0] = p;
+                        URL = String.format("jdbc:postgresql://%s:%s/%s", host, portHolder[0], dbName);
+                        // Verifica si la base se creó correctamente
+                        if (existeBaseDatos(host, portHolder[0], dbName, "postgres", password)) {
+                            creado[0] = true;
+                        }
+                    });
+                    try { Thread.sleep(1000); } catch (InterruptedException ignore) {}
+                    // Solo muestra error si realmente NO se creó la base
+                    if (!creado[0]) {
+                        javax.swing.JOptionPane.showMessageDialog(null, "No se pudo crear la base de datos. Verifique el puerto y la contraseña de postgres.");
+                        throw new SQLException("No se pudo crear la base de datos.");
                     }
-                    // Ahora conecta a la nueva base
-                    conn = DriverManager.getConnection(URL, USER, PASSWORD);
+                    // Ahora intenta conectar usando innova (usuario de la aplicación)
+                    try {
+                        conn = DriverManager.getConnection(URL, USER, PASSWORD);
+                    } catch (SQLException ex2) {
+                        javax.swing.JOptionPane.showMessageDialog(null, "No se pudo conectar a la base recién creada con el usuario de la aplicación (innova). Verifique que el usuario innova tenga permisos.");
+                        throw ex2;
+                    }
+                } else {
+                    // Si la base existe pero no conecta, relanza el error para manejo de puerto/login
+                    throw ex;
                 }
-                // Ejecuta los scripts de carga en orden
+            }
+
+            // Si la base existe y conecta, sigue el flujo normal
+            CargaDb1.ejecutar(conn);
+            if (!verificarEstructura(conn)) {
                 CargaDb3.ejecutar(conn);
                 CargaDb4.ejecutar(conn);
                 CargaDb5.ejecutar(conn);
+                CargaDb6.ejecutar(conn);
             }
             return conn;
         } catch (SQLException ex) {
-            String currentPort = URL.split(":")[2].split("/")[0];
+            // Solo maneja error de puerto aquí
+            String currentPort = portHolder[0];
             int opt = javax.swing.JOptionPane.showConfirmDialog(null,
                 "No se pudo conectar al puerto " + currentPort + ".\n¿Desea intentar con otro puerto?",
                 "Error de conexión", javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.ERROR_MESSAGE);
             if (opt == javax.swing.JOptionPane.YES_OPTION) {
                 String nuevoPuerto = javax.swing.JOptionPane.showInputDialog(null, "Ingrese el nuevo puerto:", currentPort);
                 if (nuevoPuerto != null && !nuevoPuerto.trim().isEmpty()) {
-                    String[] urlParts = URL.split(":");
-                    String dbName = urlParts[2].split("/")[1];
-                    String newURL = urlParts[0] + ":" + urlParts[1] + ":" + nuevoPuerto.trim() + "/" + dbName;
-                    URL = newURL;
+                    portHolder[0] = nuevoPuerto.trim();
+                    URL = String.format("jdbc:postgresql://%s:%s/%s", host, portHolder[0], dbName);
                     try {
                         conn = DriverManager.getConnection(URL, USER, PASSWORD);
-                        // Ejecuta CargaDb1 siempre (rol innova)
                         CargaDb1.ejecutar(conn);
-                        // Verifica estructura mínima
                         if (!verificarEstructura(conn)) {
-                            // Si la estructura no existe, verifica si la base existe
-                            if (!existeBaseDatos(getHostFromUrl(), getPortFromUrl(), getDbNameFromUrl(), USER, PASSWORD)) {
-                                // Conecta a postgres y ejecuta CargaDb2 (crear base)
-                                try (Connection connPostgres = DriverManager.getConnection(
-                                        String.format("jdbc:postgresql://%s:%s/postgres", getHostFromUrl(), getPortFromUrl()), USER, PASSWORD)) {
-                                    CargaDb2.ejecutar(connPostgres);
-                                }
-                                // Ahora conecta a la nueva base
-                                conn = DriverManager.getConnection(URL, USER, PASSWORD);
-                            }
-                            // Ejecuta los scripts de carga en orden
                             CargaDb3.ejecutar(conn);
                             CargaDb4.ejecutar(conn);
                             CargaDb5.ejecutar(conn);
+                            CargaDb6.ejecutar(conn);
                         }
                         return conn;
                     } catch (SQLException ex2) {
@@ -89,26 +105,13 @@ public class DatabaseConnection {
                 }
             } else {
                 final boolean[] conectado = {false};
-                PanelLoginAux.showDialog((host, port, db, user, pass) -> {
+                PanelLoginAux.showDialog((h, p, db, user, pass) -> {
                     try {
-                        String url = String.format("jdbc:postgresql://%s:%s/%s", host, port, db);
+                        String url = String.format("jdbc:postgresql://%s:%s/%s", h, p, db);
                         Connection c = DriverManager.getConnection(url, user, pass);
-                        setConnectionParams(host, port, db, user, pass);
-                        // Ejecuta CargaDb1 siempre (rol innova)
+                        setConnectionParams(h, p, db, user, pass);
                         CargaDb1.ejecutar(c);
-                        // Verifica estructura mínima
                         if (!verificarEstructura(c)) {
-                            // Si la estructura no existe, verifica si la base existe
-                            if (!existeBaseDatos(getHostFromUrl(), getPortFromUrl(), getDbNameFromUrl(), USER, PASSWORD)) {
-                                // Conecta a postgres y ejecuta CargaDb2 (crear base)
-                                try (Connection connPostgres = DriverManager.getConnection(
-                                        String.format("jdbc:postgresql://%s:%s/postgres", getHostFromUrl(), getPortFromUrl()), USER, PASSWORD)) {
-                                    CargaDb2.ejecutar(connPostgres);
-                                }
-                                // Ahora conecta a la nueva base
-                                c = DriverManager.getConnection(URL, USER, PASSWORD);
-                            }
-                            // Ejecuta los scripts de carga en orden
                             CargaDb3.ejecutar(c);
                             CargaDb4.ejecutar(c);
                             CargaDb5.ejecutar(c);
@@ -121,24 +124,12 @@ public class DatabaseConnection {
                 });
                 if (conectado[0]) {
                     conn = DriverManager.getConnection(URL, USER, PASSWORD);
-                    // Ejecuta CargaDb1 siempre (rol innova)
                     CargaDb1.ejecutar(conn);
-                    // Verifica estructura mínima
                     if (!verificarEstructura(conn)) {
-                        // Si la estructura no existe, verifica si la base existe
-                        if (!existeBaseDatos(getHostFromUrl(), getPortFromUrl(), getDbNameFromUrl(), USER, PASSWORD)) {
-                            // Conecta a postgres y ejecuta CargaDb2 (crear base)
-                            try (Connection connPostgres = DriverManager.getConnection(
-                                    String.format("jdbc:postgresql://%s:%s/postgres", getHostFromUrl(), getPortFromUrl()), USER, PASSWORD)) {
-                                CargaDb2.ejecutar(connPostgres);
-                            }
-                            // Ahora conecta a la nueva base
-                            conn = DriverManager.getConnection(URL, USER, PASSWORD);
-                        }
-                        // Ejecuta los scripts de carga en orden
                         CargaDb3.ejecutar(conn);
                         CargaDb4.ejecutar(conn);
                         CargaDb5.ejecutar(conn);
+                        CargaDb6.ejecutar(conn);
                     }
                     return conn;
                 }
@@ -181,15 +172,49 @@ public class DatabaseConnection {
 
     // Helpers para extraer host, puerto y db de la URL actual
     private static String getHostFromUrl() {
-        String[] parts = URL.split(":");
-        return parts[1].replaceAll("/", "");
+        // jdbc:postgresql://localhost:5432/sistema_cotizacion
+        // Remove protocol and get host
+        try {
+            String url = URL;
+            int idx1 = url.indexOf("//");
+            int idx2 = url.indexOf(":", idx1 + 2);
+            if (idx1 >= 0 && idx2 > idx1) {
+                return url.substring(idx1 + 2, idx2);
+            }
+            // fallback
+            return "localhost";
+        } catch (Exception ex) {
+            return "localhost";
+        }
     }
     private static String getPortFromUrl() {
-        String[] parts = URL.split(":");
-        return parts[2].split("/")[0];
+        // jdbc:postgresql://localhost:5432/sistema_cotizacion
+        try {
+            String url = URL;
+            int idx1 = url.indexOf("//");
+            int idx2 = url.indexOf(":", idx1 + 2);
+            int idx3 = url.indexOf("/", idx2 + 1);
+            if (idx2 > idx1 && idx3 > idx2) {
+                return url.substring(idx2 + 1, idx3);
+            }
+            // fallback
+            return "5432";
+        } catch (Exception ex) {
+            return "5432";
+        }
     }
     private static String getDbNameFromUrl() {
-        String[] parts = URL.split(":");
-        return parts[2].split("/")[1];
+        // jdbc:postgresql://localhost:5432/sistema_cotizacion
+        try {
+            String url = URL;
+            int idx3 = url.lastIndexOf("/");
+            if (idx3 >= 0 && idx3 < url.length() - 1) {
+                return url.substring(idx3 + 1);
+            }
+            // fallback
+            return "sistema_cotizacion";
+        } catch (Exception ex) {
+            return "sistema_cotizacion";
+        }
     }
 }
