@@ -15,6 +15,9 @@ public class ProductosFrame extends JFrame {
     private DefaultTableModel modeloProductos;
     private JTextField txtCantidad;
     private JButton btnAgregar;
+    private JTextField txtBuscar;
+    private JButton btnBuscar;
+    private JButton btnOrdenPrecioAsc, btnOrdenPrecioDesc;
 
     public interface ProductoListener {
         void productoSeleccionado(String idServ, String nombre, double precio, int cantidad);
@@ -49,6 +52,30 @@ public class ProductosFrame extends JFrame {
         btnAgregar.setForeground(Color.WHITE);
         btnAgregar.setFont(fuenteCampos);
 
+        txtBuscar = new JTextField(18);
+        txtBuscar.setFont(fuenteCampos);
+        btnBuscar = new JButton("Buscar");
+        btnBuscar.setBackground(colorBorde);
+        btnBuscar.setForeground(Color.WHITE);
+        btnBuscar.setFont(fuenteCampos);
+
+        btnOrdenPrecioAsc = new JButton("Precio ↑");
+        btnOrdenPrecioDesc = new JButton("Precio ↓");
+        btnOrdenPrecioAsc.setBackground(colorBorde);
+        btnOrdenPrecioDesc.setBackground(colorBorde);
+        btnOrdenPrecioAsc.setForeground(Color.WHITE);
+        btnOrdenPrecioDesc.setForeground(Color.WHITE);
+        btnOrdenPrecioAsc.setFont(fuenteCampos);
+        btnOrdenPrecioDesc.setFont(fuenteCampos);
+
+        JPanel panelBusqueda = new JPanel();
+        panelBusqueda.setBackground(colorFondoPanel);
+        panelBusqueda.add(new JLabel("Buscar descripción:"));
+        panelBusqueda.add(txtBuscar);
+        panelBusqueda.add(btnBuscar);
+        panelBusqueda.add(btnOrdenPrecioAsc);
+        panelBusqueda.add(btnOrdenPrecioDesc);
+
         JPanel panelInferior = new JPanel();
         panelInferior.setBackground(colorFondoPanel);
         panelInferior.add(new JLabel("Cantidad:"));
@@ -58,14 +85,18 @@ public class ProductosFrame extends JFrame {
         JPanel panelPrincipal = new JPanel(new BorderLayout());
         panelPrincipal.setBackground(colorFondoPanel);
         panelPrincipal.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(colorBorde, 2, true), "Productos/Servicios"));
+                BorderFactory.createLineBorder(colorBorde, 2, true), "Productos/Servicios"));
 
+        panelPrincipal.add(panelBusqueda, BorderLayout.NORTH);
         panelPrincipal.add(new JScrollPane(tablaProductos), BorderLayout.CENTER);
         panelPrincipal.add(panelInferior, BorderLayout.SOUTH);
 
         setContentPane(panelPrincipal);
 
         btnAgregar.addActionListener(e -> agregarProducto());
+        btnBuscar.addActionListener(e -> buscarProductos());
+        btnOrdenPrecioAsc.addActionListener(e -> cargarProductosPorPrecioAsc());
+        btnOrdenPrecioDesc.addActionListener(e -> cargarProductosPorPrecioDesc());
     }
 
     /**
@@ -81,6 +112,27 @@ public class ProductosFrame extends JFrame {
             }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Error al cargar productos: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * Busca productos por texto en la descripción.
+     */
+    private void buscarProductos() {
+        String texto = txtBuscar.getText().trim();
+        modeloProductos.setRowCount(0);
+        if (texto.isEmpty()) {
+            cargarProductos();
+            return;
+        }
+        try {
+            for (String[] prod : ProductoDB.buscarProductosPorTexto(texto)) {
+                modeloProductos.addRow(new Object[] {
+                        prod[0], prod[1], prod[2], prod[3]
+                });
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al buscar productos: " + ex.getMessage());
         }
     }
 
@@ -115,5 +167,31 @@ public class ProductosFrame extends JFrame {
             listener.productoSeleccionado(idServ, nombre, precio, cantidad);
         }
         dispose();
+    }
+
+    private void cargarProductosPorPrecioAsc() {
+        modeloProductos.setRowCount(0);
+        try {
+            for (String[] prod : ProductoDB.listarProductosPorPrecioAsc()) {
+                modeloProductos.addRow(new Object[] {
+                        prod[0], prod[1], prod[2], prod[3]
+                });
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al ordenar productos: " + ex.getMessage());
+        }
+    }
+
+    private void cargarProductosPorPrecioDesc() {
+        modeloProductos.setRowCount(0);
+        try {
+            for (String[] prod : ProductoDB.listarProductosPorPrecioDesc()) {
+                modeloProductos.addRow(new Object[] {
+                        prod[0], prod[1], prod[2], prod[3]
+                });
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al ordenar productos: " + ex.getMessage());
+        }
     }
 }

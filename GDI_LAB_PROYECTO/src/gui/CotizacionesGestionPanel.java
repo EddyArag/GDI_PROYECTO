@@ -10,13 +10,16 @@ import java.sql.SQLException;
 import dataBase.CotizacionDB;
 
 /**
- * Panel para la gestión de cotizaciones: ver, eliminar, reactivar, modificar, actualizar y exportar PDF.
+ * Panel para la gestión de cotizaciones: ver, eliminar, reactivar, modificar,
+ * actualizar y exportar PDF.
  * Utiliza CotizacionDB para operaciones con la base de datos.
  */
 public class CotizacionesGestionPanel extends JPanel {
     private JTable tablaCotizaciones;
     private DefaultTableModel modeloCotizaciones;
     private JButton btnEliminar, btnReactivar, btnActualizar, btnVerCotizacion, btnExportarPDF;
+    private JTextField txtBuscarCot;
+    private JButton btnBuscarCot, btnOrdenTotalAsc, btnOrdenTotalDesc;
 
     private Color colorFondoPanel = new Color(220, 235, 250);
     private Color colorBorde = new Color(100, 160, 220);
@@ -28,10 +31,10 @@ public class CotizacionesGestionPanel extends JPanel {
     public CotizacionesGestionPanel() {
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(colorBorde, 2, true), "Gestión de Cotizaciones"));
+                BorderFactory.createLineBorder(colorBorde, 2, true), "Gestión de Cotizaciones"));
         setBackground(colorFondoPanel);
 
-        modeloCotizaciones = new DefaultTableModel(new Object[] { "NCOT", "Fecha", "Cliente", "Garantía" }, 0);
+        modeloCotizaciones = new DefaultTableModel(new Object[] { "NCOT", "Fecha", "Cliente", "Garantía", "Total" }, 0);
         tablaCotizaciones = new JTable(modeloCotizaciones);
         tablaCotizaciones.setFont(fuenteCampos);
         tablaCotizaciones.setRowHeight(28);
@@ -45,22 +48,47 @@ public class CotizacionesGestionPanel extends JPanel {
         btnActualizar = new JButton("Actualizar");
         btnVerCotizacion = new JButton("Ver Cotización");
         btnExportarPDF = new JButton("Exportar PDF");
+        btnBuscarCot = new JButton("Buscar");
+        btnOrdenTotalAsc = new JButton("Total ↑");
+        btnOrdenTotalDesc = new JButton("Total ↓");
 
         btnEliminar.setBackground(colorBorde);
         btnReactivar.setBackground(colorBorde);
         btnActualizar.setBackground(colorBorde);
         btnVerCotizacion.setBackground(colorBorde);
         btnExportarPDF.setBackground(colorBorde);
+        btnBuscarCot.setBackground(colorBorde);
+        btnOrdenTotalAsc.setBackground(colorBorde);
+        btnOrdenTotalDesc.setBackground(colorBorde);
+
         btnEliminar.setForeground(Color.WHITE);
         btnReactivar.setForeground(Color.WHITE);
         btnActualizar.setForeground(Color.WHITE);
         btnVerCotizacion.setForeground(Color.WHITE);
         btnExportarPDF.setForeground(Color.WHITE);
+        btnBuscarCot.setForeground(Color.WHITE);
+        btnOrdenTotalAsc.setForeground(Color.WHITE);
+        btnOrdenTotalDesc.setForeground(Color.WHITE);
+
         btnEliminar.setFont(fuenteCampos);
         btnReactivar.setFont(fuenteCampos);
         btnActualizar.setFont(fuenteCampos);
         btnVerCotizacion.setFont(fuenteCampos);
         btnExportarPDF.setFont(fuenteCampos);
+        btnBuscarCot.setFont(fuenteCampos);
+        btnOrdenTotalAsc.setFont(fuenteCampos);
+        btnOrdenTotalDesc.setFont(fuenteCampos);
+
+        txtBuscarCot = new JTextField(14);
+        txtBuscarCot.setFont(fuenteCampos);
+
+        JPanel panelBusqueda = new JPanel();
+        panelBusqueda.setBackground(colorFondoPanel);
+        panelBusqueda.add(new JLabel("Buscar por NCOT:"));
+        panelBusqueda.add(txtBuscarCot);
+        panelBusqueda.add(btnBuscarCot);
+        panelBusqueda.add(btnOrdenTotalAsc);
+        panelBusqueda.add(btnOrdenTotalDesc);
 
         JPanel panelBotones = new JPanel();
         panelBotones.setBackground(colorFondoPanel);
@@ -70,6 +98,7 @@ public class CotizacionesGestionPanel extends JPanel {
         panelBotones.add(btnVerCotizacion);
         panelBotones.add(btnExportarPDF);
 
+        add(panelBusqueda, BorderLayout.NORTH);
         add(new JScrollPane(tablaCotizaciones), BorderLayout.CENTER);
         add(panelBotones, BorderLayout.SOUTH);
 
@@ -78,16 +107,20 @@ public class CotizacionesGestionPanel extends JPanel {
         btnActualizar.addActionListener(e -> cargarCotizaciones());
         btnVerCotizacion.addActionListener(e -> verCotizacionSeleccionada());
         btnExportarPDF.addActionListener(e -> exportarCotizacionPDF());
+        btnBuscarCot.addActionListener(e -> buscarCotizacionPorNCOT());
+        btnOrdenTotalAsc.addActionListener(e -> cargarCotizacionesPorTotalAsc());
+        btnOrdenTotalDesc.addActionListener(e -> cargarCotizacionesPorTotalDesc());
     }
 
     /**
      * Carga las cotizaciones activas en la tabla.
+     * Ahora muestra código y nombre completo del cliente y el total.
      */
     private void cargarCotizaciones() {
         modeloCotizaciones.setRowCount(0);
         try {
-            for (String[] cot : CotizacionDB.listarCotizaciones()) { // Solo activas
-                modeloCotizaciones.addRow(cot);
+            for (String[] cot : CotizacionDB.listarCotizacionesPorTotalDesc()) {
+                modeloCotizaciones.addRow(new Object[] { cot[0], cot[1], cot[2], cot[3], cot[4] });
             }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Error al cargar cotizaciones: " + ex.getMessage());
@@ -193,7 +226,7 @@ public class CotizacionesGestionPanel extends JPanel {
                 subtotal += Double.parseDouble(det[5]); // linea_total
             }
             try (Connection conn = dataBase.DatabaseConnection.getConnection();
-                 PreparedStatement ps = conn.prepareStatement("SELECT desct FROM Cotizacion WHERE ncot = ?")) {
+                    PreparedStatement ps = conn.prepareStatement("SELECT desct FROM Cotizacion WHERE ncot = ?")) {
                 ps.setString(1, ncot);
                 ResultSet rs = ps.executeQuery();
                 if (rs.next()) {
@@ -248,6 +281,66 @@ public class CotizacionesGestionPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "Cotización exportada a PDF correctamente.");
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error al exportar PDF: " + ex.getMessage());
+        }
+    }
+
+    private void cargarCotizacionesPorTotalAsc() {
+        modeloCotizaciones.setRowCount(0);
+        try {
+            for (String[] cot : CotizacionDB.listarCotizacionesPorTotalAsc()) {
+                modeloCotizaciones.addRow(new Object[] { cot[0], cot[1], cot[2], cot[3], cot[4] });
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al ordenar cotizaciones: " + ex.getMessage());
+        }
+    }
+
+    private void cargarCotizacionesPorTotalDesc() {
+        modeloCotizaciones.setRowCount(0);
+        try {
+            for (String[] cot : CotizacionDB.listarCotizacionesPorTotalDesc()) {
+                modeloCotizaciones.addRow(new Object[] { cot[0], cot[1], cot[2], cot[3], cot[4] });
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al ordenar cotizaciones: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * Busca cotización por número usando FN_RESUMEN_CABECERA_COTIZACION.
+     * Muestra código y nombre completo del cliente y el total.
+     */
+    private void buscarCotizacionPorNCOT() {
+        String ncot = txtBuscarCot.getText().trim();
+        ncot = CotizacionDB.formatearNCOT(ncot);
+        modeloCotizaciones.setRowCount(0);
+        if (ncot.isEmpty()) {
+            cargarCotizaciones();
+            return;
+        }
+        try (Connection conn = dataBase.DatabaseConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(
+                        "SELECT c.ncot, c.femi, cl.id_cli, TRIM(cl.p_nomb || ' ' || COALESCE(cl.ape_p,'') || ' ' || COALESCE(cl.ape_m,'')) AS nombre_completo, c.gara, r.total "
+                                +
+                                "FROM Cotizacion c " +
+                                "JOIN Cliente cl ON cl.id_cli = c.id_cli " +
+                                "JOIN FN_RESUMEN_CABECERA_COTIZACION(c.ncot) r ON r.ncot = c.ncot " +
+                                "WHERE c.ncot = ?")) {
+            ps.setString(1, ncot);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                modeloCotizaciones.addRow(new Object[] {
+                        rs.getString("ncot"),
+                        rs.getString("femi"),
+                        rs.getString("id_cli") + " - " + rs.getString("nombre_completo"),
+                        rs.getString("gara"),
+                        rs.getString("total")
+                });
+            } else {
+                JOptionPane.showMessageDialog(this, "No se encontró la cotización.");
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al buscar cotización: " + ex.getMessage());
         }
     }
 }

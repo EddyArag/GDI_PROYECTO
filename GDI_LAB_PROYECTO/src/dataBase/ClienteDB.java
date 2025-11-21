@@ -5,12 +5,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Clase de acceso a datos para operaciones CRUD y consultas sobre la entidad Cliente.
+ * Clase de acceso a datos para operaciones CRUD y consultas sobre la entidad
+ * Cliente.
  */
 public class ClienteDB {
 
     /**
      * Lista todos los clientes activos usando la función FN_LISTAR_CLIENTES().
+     * 
      * @return Lista de clientes (ID, nombre completo, RUC, observaciones).
      */
     public static List<String[]> listarClientes() throws SQLException {
@@ -32,23 +34,25 @@ public class ClienteDB {
     }
 
     /**
-     * Inserta un nuevo cliente usando el procedimiento almacenado SP_INSERTAR_CLIENTE.
+     * Inserta un nuevo cliente usando el procedimiento almacenado
+     * SP_INSERTAR_CLIENTE.
+     * 
      * @return El ID generado para el nuevo cliente.
      */
     public static int insertarCliente(String p_nomb, String ape_p, String ape_m, String ruc, String obs)
             throws SQLException {
         int nuevoId = -1;
         try (Connection conn = DatabaseConnection.getConnection();
-             CallableStatement cs = conn.prepareCall("CALL SP_INSERTAR_CLIENTE(?, ?, ?, ?, ?, ?)")) {
+                CallableStatement cs = conn.prepareCall("CALL SP_INSERTAR_CLIENTE(?, ?, ?, ?, ?, ?)")) {
             cs.setString(1, p_nomb); // VARCHAR(50)
-            cs.setString(2, ape_p);  // VARCHAR(50)
-            cs.setString(3, ape_m);  // VARCHAR(50)
+            cs.setString(2, ape_p); // VARCHAR(50)
+            cs.setString(3, ape_m); // VARCHAR(50)
             if (ruc == null || ruc.trim().isEmpty()) {
                 cs.setNull(4, Types.CHAR); // CHAR(11) - manda null si no hay RUC
             } else {
-                cs.setString(4, ruc);      // CHAR(11)
+                cs.setString(4, ruc); // CHAR(11)
             }
-            cs.setString(5, obs);    // VARCHAR(200)
+            cs.setString(5, obs); // VARCHAR(200)
             cs.registerOutParameter(6, Types.INTEGER); // OUT p_new_id_cli INT
             cs.execute();
             nuevoId = cs.getInt(6);
@@ -62,13 +66,13 @@ public class ClienteDB {
     public static void modificarCliente(int id, String p_nomb, String ape_p, String ape_m, String ruc, String obs)
             throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
-             CallableStatement cs = conn.prepareCall("CALL SP_MODIFICAR_CLIENTE(?, ?, ?, ?, ?, ?)")) {
-            cs.setInt(1, id);        // INT
+                CallableStatement cs = conn.prepareCall("CALL SP_MODIFICAR_CLIENTE(?, ?, ?, ?, ?, ?)")) {
+            cs.setInt(1, id); // INT
             cs.setString(2, p_nomb); // VARCHAR(50)
-            cs.setString(3, ape_p);  // VARCHAR(50)
-            cs.setString(4, ape_m);  // VARCHAR(50)
-            cs.setString(5, ruc);    // CHAR(11)
-            cs.setString(6, obs);    // VARCHAR(200)
+            cs.setString(3, ape_p); // VARCHAR(50)
+            cs.setString(4, ape_m); // VARCHAR(50)
+            cs.setString(5, ruc); // CHAR(11)
+            cs.setString(6, obs); // VARCHAR(200)
             cs.execute();
         }
     }
@@ -78,7 +82,7 @@ public class ClienteDB {
      */
     public static void eliminarLogicoCliente(int id) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
-             CallableStatement cs = conn.prepareCall("CALL SP_ELIMINAR_LOGICO_CLIENTE(?)")) {
+                CallableStatement cs = conn.prepareCall("CALL SP_ELIMINAR_LOGICO_CLIENTE(?)")) {
             cs.setInt(1, id);
             cs.execute();
         }
@@ -96,7 +100,9 @@ public class ClienteDB {
     }
 
     /**
-     * Obtiene las direcciones asociadas a un cliente usando FN_GET_DIRECCIONES_CLIENTE.
+     * Obtiene las direcciones asociadas a un cliente usando
+     * FN_GET_DIRECCIONES_CLIENTE.
+     * 
      * @return Lista de direcciones (ID, dirección).
      */
     public static List<String[]> getDireccionesCliente(int idCli) throws SQLException {
@@ -118,6 +124,7 @@ public class ClienteDB {
 
     /**
      * Obtiene los teléfonos asociados a un cliente usando FN_GET_TELEFONOS_CLIENTE.
+     * 
      * @return Lista de teléfonos (ID, teléfono).
      */
     public static List<String[]> getTelefonosCliente(int idCli) throws SQLException {
@@ -138,7 +145,9 @@ public class ClienteDB {
     }
 
     /**
-     * Lista todos los clientes desactivados usando FN_LISTAR_CLIENTES_DESACTIVADOS().
+     * Lista todos los clientes desactivados usando
+     * FN_LISTAR_CLIENTES_DESACTIVADOS().
+     * 
      * @return Lista de clientes desactivados.
      */
     public static List<String[]> listarClientesDesactivados() throws SQLException {
@@ -147,6 +156,37 @@ public class ClienteDB {
                 Statement stmt = conn.createStatement();
                 ResultSet rs = stmt.executeQuery(
                         "SELECT id_cli, nombre_completo, ruc, observaciones FROM FN_LISTAR_CLIENTES_DESACTIVADOS()")) {
+            while (rs.next()) {
+                clientes.add(new String[] {
+                        String.valueOf(rs.getInt("id_cli")),
+                        rs.getString("nombre_completo"),
+                        rs.getString("ruc"),
+                        rs.getString("observaciones")
+                });
+            }
+        }
+        return clientes;
+    }
+
+    /**
+     * Busca clientes activos por nombre o RUC (filtro simple).
+     * 
+     * @param filtro Texto a buscar en nombre completo o RUC.
+     * @return Lista de clientes filtrados.
+     */
+    public static List<String[]> buscarClientes(String filtro) throws SQLException {
+        List<String[]> clientes = new ArrayList<>();
+        String sql = "SELECT id_cli, TRIM(p_nomb || ' ' || COALESCE(ape_p, '') || ' ' || COALESCE(ape_m, '')) AS nombre_completo, ruc, obs AS observaciones "
+                +
+                "FROM Cliente WHERE ACTIVO = TRUE AND (" +
+                "LOWER(p_nomb || ' ' || COALESCE(ape_p, '') || ' ' || COALESCE(ape_m, '')) LIKE ? OR " +
+                "ruc LIKE ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            String like = "%" + filtro.toLowerCase() + "%";
+            ps.setString(1, like);
+            ps.setString(2, like);
+            ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 clientes.add(new String[] {
                         String.valueOf(rs.getInt("id_cli")),

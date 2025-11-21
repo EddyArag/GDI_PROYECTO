@@ -7,13 +7,16 @@ import java.sql.SQLException;
 import dataBase.ProductoDB;
 
 /**
- * Panel para la gestión de productos/servicios: agregar, modificar, eliminar, reactivar y actualizar.
+ * Panel para la gestión de productos/servicios: agregar, modificar, eliminar,
+ * reactivar y actualizar.
  * Utiliza ProductoDB para operaciones con la base de datos.
  */
 public class ProductosGestionPanel extends JPanel {
     private JTable tablaProductos;
     private DefaultTableModel modeloProductos;
-    private JButton btnAgregar, btnModificar, btnEliminar, btnReactivar, btnActualizar;
+    private JButton btnAgregar, btnModificar, btnEliminar, btnReactivar, btnActualizar, btnBuscar;
+    private JButton btnOrdenPrecioAsc, btnOrdenPrecioDesc;
+    private JTextField txtBuscar;
 
     private Color colorFondoPanel = new Color(220, 235, 250);
     private Color colorBorde = new Color(100, 160, 220);
@@ -42,22 +45,47 @@ public class ProductosGestionPanel extends JPanel {
         btnEliminar = new JButton("Eliminar");
         btnReactivar = new JButton("Reactivar");
         btnActualizar = new JButton("Actualizar");
+        btnBuscar = new JButton("Buscar");
+        btnOrdenPrecioAsc = new JButton("Precio ↑");
+        btnOrdenPrecioDesc = new JButton("Precio ↓");
 
         btnAgregar.setBackground(colorBorde);
         btnModificar.setBackground(colorBorde);
         btnEliminar.setBackground(colorBorde);
         btnReactivar.setBackground(colorBorde);
         btnActualizar.setBackground(colorBorde);
+        btnBuscar.setBackground(colorBorde);
+        btnOrdenPrecioAsc.setBackground(colorBorde);
+        btnOrdenPrecioDesc.setBackground(colorBorde);
+
         btnAgregar.setForeground(Color.WHITE);
         btnModificar.setForeground(Color.WHITE);
         btnEliminar.setForeground(Color.WHITE);
         btnReactivar.setForeground(Color.WHITE);
         btnActualizar.setForeground(Color.WHITE);
+        btnBuscar.setForeground(Color.WHITE);
+        btnOrdenPrecioAsc.setForeground(Color.WHITE);
+        btnOrdenPrecioDesc.setForeground(Color.WHITE);
+
         btnAgregar.setFont(fuenteCampos);
         btnModificar.setFont(fuenteCampos);
         btnEliminar.setFont(fuenteCampos);
         btnReactivar.setFont(fuenteCampos);
         btnActualizar.setFont(fuenteCampos);
+        btnBuscar.setFont(fuenteCampos);
+        btnOrdenPrecioAsc.setFont(fuenteCampos);
+        btnOrdenPrecioDesc.setFont(fuenteCampos);
+
+        txtBuscar = new JTextField(18);
+        txtBuscar.setFont(fuenteCampos);
+
+        JPanel panelBusqueda = new JPanel();
+        panelBusqueda.setBackground(colorFondoPanel);
+        panelBusqueda.add(new JLabel("Buscar descripción:"));
+        panelBusqueda.add(txtBuscar);
+        panelBusqueda.add(btnBuscar);
+        panelBusqueda.add(btnOrdenPrecioAsc);
+        panelBusqueda.add(btnOrdenPrecioDesc);
 
         JPanel panelBotones = new JPanel();
         panelBotones.setBackground(colorFondoPanel);
@@ -67,6 +95,7 @@ public class ProductosGestionPanel extends JPanel {
         panelBotones.add(btnReactivar);
         panelBotones.add(btnActualizar);
 
+        add(panelBusqueda, BorderLayout.NORTH);
         add(new JScrollPane(tablaProductos), BorderLayout.CENTER);
         add(panelBotones, BorderLayout.SOUTH);
 
@@ -75,6 +104,9 @@ public class ProductosGestionPanel extends JPanel {
         btnEliminar.addActionListener(e -> eliminarProducto());
         btnReactivar.addActionListener(e -> mostrarVentanaReactivar());
         btnActualizar.addActionListener(e -> cargarProductos());
+        btnBuscar.addActionListener(e -> buscarProductos());
+        btnOrdenPrecioAsc.addActionListener(e -> cargarProductosPorPrecioAsc());
+        btnOrdenPrecioDesc.addActionListener(e -> cargarProductosPorPrecioDesc());
     }
 
     /**
@@ -134,8 +166,9 @@ public class ProductosGestionPanel extends JPanel {
         // Pregunta tipo antes de mostrar el formulario
         String[] opciones = { "Producto", "Servicio" };
         int tipo = JOptionPane.showOptionDialog(this, "¿Qué desea agregar?", "Tipo de registro",
-            JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, opciones, opciones[0]);
-        if (tipo == JOptionPane.CLOSED_OPTION) return;
+                JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, opciones, opciones[0]);
+        if (tipo == JOptionPane.CLOSED_OPTION)
+            return;
 
         String prefix = tipo == 0 ? "P" : "S";
         int maxNum = 0;
@@ -145,11 +178,14 @@ public class ProductosGestionPanel extends JPanel {
                 if (id != null && id.startsWith(prefix)) {
                     try {
                         int num = Integer.parseInt(id.substring(1));
-                        if (num > maxNum) maxNum = num;
-                    } catch (Exception ignore) {}
+                        if (num > maxNum)
+                            maxNum = num;
+                    } catch (Exception ignore) {
+                    }
                 }
             }
-        } catch (Exception ignore) {}
+        } catch (Exception ignore) {
+        }
         String nextId = String.format("%s%03d", prefix, maxNum + 1);
 
         JTextField idServ = new JTextField(nextId);
@@ -158,26 +194,31 @@ public class ProductosGestionPanel extends JPanel {
         JTextField precio = new PlaceholderTextField("Ej: 150.00");
         JTextField stock = new PlaceholderTextField("Ej: 10");
         Object[] campos = {
-            "ID:", idServ,
-            "Descripción:", descp,
-            "Precio Unitario:", precio,
-            "Stock:", stock
+                "ID:", idServ,
+                "Descripción:", descp,
+                "Precio Unitario:", precio,
+                "Stock:", stock
         };
         while (true) {
-            int res = JOptionPane.showConfirmDialog(this, campos, "Nuevo " + opciones[tipo], JOptionPane.OK_CANCEL_OPTION);
-            if (res != JOptionPane.OK_OPTION) return;
+            int res = JOptionPane.showConfirmDialog(this, campos, "Nuevo " + opciones[tipo],
+                    JOptionPane.OK_CANCEL_OPTION);
+            if (res != JOptionPane.OK_OPTION)
+                return;
 
             // Validación en Java antes de enviar a la BD
             if (descp.getText().trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "El campo Descripción es obligatorio.", "Validación", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "El campo Descripción es obligatorio.", "Validación",
+                        JOptionPane.WARNING_MESSAGE);
                 continue;
             }
             double precioVal = 0;
             try {
                 precioVal = Double.parseDouble(precio.getText().trim());
-                if (precioVal <= 0) throw new NumberFormatException();
+                if (precioVal <= 0)
+                    throw new NumberFormatException();
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "El campo Precio debe ser un número mayor a 0.", "Validación", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "El campo Precio debe ser un número mayor a 0.", "Validación",
+                        JOptionPane.WARNING_MESSAGE);
                 continue;
             }
             String stockTxt = stock.getText().trim();
@@ -203,7 +244,8 @@ public class ProductosGestionPanel extends JPanel {
             }
             if (stockNegativo) {
                 int opt = JOptionPane.showConfirmDialog(this,
-                    "El stock no puede ser negativo.\n¿Desea cambiar el valor de stock?", "Stock Negativo", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                        "El stock no puede ser negativo.\n¿Desea cambiar el valor de stock?", "Stock Negativo",
+                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
                 if (opt == JOptionPane.YES_OPTION) {
                     continue;
                 } else {
@@ -212,8 +254,9 @@ public class ProductosGestionPanel extends JPanel {
             }
             if (stockAlerta) {
                 int confirm = JOptionPane.showConfirmDialog(this,
-                    "El stock ingresado es 0 o inválido.\n¿Está seguro de agregar el " + opciones[tipo].toLowerCase() + " con stock 0?",
-                    "Confirmar Stock 0", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                        "El stock ingresado es 0 o inválido.\n¿Está seguro de agregar el "
+                                + opciones[tipo].toLowerCase() + " con stock 0?",
+                        "Confirmar Stock 0", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
                 if (confirm != JOptionPane.YES_OPTION) {
                     continue;
                 }
@@ -255,18 +298,22 @@ public class ProductosGestionPanel extends JPanel {
         };
         while (true) {
             int res = JOptionPane.showConfirmDialog(this, campos, "Modificar Producto", JOptionPane.OK_CANCEL_OPTION);
-            if (res != JOptionPane.OK_OPTION) return;
+            if (res != JOptionPane.OK_OPTION)
+                return;
 
             if (descp.getText().trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "El campo Descripción es obligatorio.", "Validación", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "El campo Descripción es obligatorio.", "Validación",
+                        JOptionPane.WARNING_MESSAGE);
                 continue;
             }
             double precioVal = 0;
             try {
                 precioVal = Double.parseDouble(precio.getText().trim());
-                if (precioVal <= 0) throw new NumberFormatException();
+                if (precioVal <= 0)
+                    throw new NumberFormatException();
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "El campo Precio debe ser un número mayor a 0.", "Validación", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "El campo Precio debe ser un número mayor a 0.", "Validación",
+                        JOptionPane.WARNING_MESSAGE);
                 continue;
             }
             String stockTxt = stock.getText().trim();
@@ -292,7 +339,8 @@ public class ProductosGestionPanel extends JPanel {
             }
             if (stockNegativo) {
                 int opt = JOptionPane.showConfirmDialog(this,
-                    "El stock no puede ser negativo.\n¿Desea cambiar el valor de stock?", "Stock Negativo", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                        "El stock no puede ser negativo.\n¿Desea cambiar el valor de stock?", "Stock Negativo",
+                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
                 if (opt == JOptionPane.YES_OPTION) {
                     continue;
                 } else {
@@ -301,8 +349,8 @@ public class ProductosGestionPanel extends JPanel {
             }
             if (stockAlerta) {
                 int confirm = JOptionPane.showConfirmDialog(this,
-                    "El stock ingresado es 0 o inválido.\n¿Está seguro de modificar el producto con stock 0?",
-                    "Confirmar Stock 0", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                        "El stock ingresado es 0 o inválido.\n¿Está seguro de modificar el producto con stock 0?",
+                        "Confirmar Stock 0", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
                 if (confirm != JOptionPane.YES_OPTION) {
                     continue;
                 }
@@ -347,13 +395,62 @@ public class ProductosGestionPanel extends JPanel {
     }
 
     /**
+     * Busca productos por texto en la descripción.
+     */
+    private void buscarProductos() {
+        String texto = txtBuscar.getText().trim();
+        modeloProductos.setRowCount(0);
+        if (texto.isEmpty()) {
+            cargarProductos();
+            return;
+        }
+        try {
+            for (String[] prod : ProductoDB.buscarProductosPorTexto(texto)) {
+                modeloProductos.addRow(prod);
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al buscar productos: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * Carga los productos en orden ascendente por precio.
+     */
+    private void cargarProductosPorPrecioAsc() {
+        modeloProductos.setRowCount(0);
+        try {
+            for (String[] prod : ProductoDB.listarProductosPorPrecioAsc()) {
+                modeloProductos.addRow(prod);
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al ordenar productos: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * Carga los productos en orden descendente por precio.
+     */
+    private void cargarProductosPorPrecioDesc() {
+        modeloProductos.setRowCount(0);
+        try {
+            for (String[] prod : ProductoDB.listarProductosPorPrecioDesc()) {
+                modeloProductos.addRow(prod);
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al ordenar productos: " + ex.getMessage());
+        }
+    }
+
+    /**
      * JTextField con placeholder para formularios.
      */
     class PlaceholderTextField extends JTextField {
         private String placeholder;
+
         public PlaceholderTextField(String placeholder) {
             this.placeholder = placeholder;
         }
+
         @Override
         protected void paintComponent(java.awt.Graphics g) {
             super.paintComponent(g);

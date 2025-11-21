@@ -14,6 +14,7 @@ public class CotizacionDB {
 
     /**
      * Lista todas las cotizaciones activas usando FN_LISTAR_COTIZACIONES().
+     * 
      * @return Lista de cotizaciones (NCOT, fecha, cliente, garantía).
      */
     public static List<String[]> listarCotizaciones() throws SQLException {
@@ -35,7 +36,9 @@ public class CotizacionDB {
     }
 
     /**
-     * Lista todas las cotizaciones desactivadas usando FN_LISTAR_COTIZACIONES_DESACTIVADAS().
+     * Lista todas las cotizaciones desactivadas usando
+     * FN_LISTAR_COTIZACIONES_DESACTIVADAS().
+     * 
      * @return Lista de cotizaciones desactivadas.
      */
     public static List<String[]> listarCotizacionesDesactivadas() throws SQLException {
@@ -79,7 +82,8 @@ public class CotizacionDB {
     }
 
     /**
-     * Crea una cotización completa (cabecera y detalles) usando los procedimientos almacenados.
+     * Crea una cotización completa (cabecera y detalles) usando los procedimientos
+     * almacenados.
      */
     public static void crearCotizacionCompleta(
             String ncot,
@@ -137,7 +141,8 @@ public class CotizacionDB {
     }
 
     /**
-     * Modifica la cabecera de una cotización usando SP_MODIFICAR_CABECERA_COTIZACION.
+     * Modifica la cabecera de una cotización usando
+     * SP_MODIFICAR_CABECERA_COTIZACION.
      */
     public static void modificarCabeceraCotizacion(
             String ncot,
@@ -158,13 +163,14 @@ public class CotizacionDB {
 
     /**
      * Genera el siguiente número de cotización en formato "001-000001".
+     * 
      * @return Número de cotización generado.
      */
     public static String generarNumeroCotizacion() throws SQLException {
         String ultimo = null;
         try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT ncot FROM Cotizacion ORDER BY ncot DESC LIMIT 1")) {
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT ncot FROM Cotizacion ORDER BY ncot DESC LIMIT 1")) {
             if (rs.next()) {
                 ultimo = rs.getString("ncot");
             }
@@ -192,6 +198,108 @@ public class CotizacionDB {
             this.id_serv_in = id_serv_in;
             this.cant_in = cant_in;
         }
+    }
+
+    /**
+     * Obtiene el resumen de cabecera de una cotización usando
+     * FN_RESUMEN_CABECERA_COTIZACION.
+     * 
+     * @param ncot Número de cotización.
+     * @return Array con los datos de la cabecera (NCOT, Fecha, Cliente, Descuento,
+     *         IGV, Subtotal, Total).
+     */
+    public static String[] resumenCabeceraCotizacion(String ncot) throws SQLException {
+        try (Connection conn = DatabaseConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(
+                        "SELECT ncot, femi, id_cli, desct, igv, subtotal, total FROM FN_RESUMEN_CABECERA_COTIZACION(?)")) {
+            ps.setString(1, ncot);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return new String[] {
+                        rs.getString("ncot"),
+                        rs.getString("femi"),
+                        rs.getString("id_cli"),
+                        rs.getString("desct"),
+                        rs.getString("igv"),
+                        rs.getString("subtotal"),
+                        rs.getString("total")
+                };
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Lista cotizaciones activas ordenadas por total (descendente), mostrando
+     * código y nombre completo del cliente.
+     */
+    public static List<String[]> listarCotizacionesPorTotalDesc() throws SQLException {
+        List<String[]> cotizaciones = new ArrayList<>();
+        String sql = "SELECT c.ncot, c.femi, " +
+                "cl.id_cli, " +
+                "TRIM(cl.p_nomb || ' ' || COALESCE(cl.ape_p,'') || ' ' || COALESCE(cl.ape_m,'')) AS nombre_completo, " +
+                "c.gara, r.total " +
+                "FROM Cotizacion c " +
+                "JOIN Cliente cl ON cl.id_cli = c.id_cli " +
+                "JOIN FN_RESUMEN_CABECERA_COTIZACION(c.ncot) r ON r.ncot = c.ncot " +
+                "WHERE c.activo = TRUE " +
+                "ORDER BY r.total DESC";
+        try (Connection conn = DatabaseConnection.getConnection();
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                cotizaciones.add(new String[] {
+                        rs.getString("ncot"),
+                        rs.getString("femi"),
+                        rs.getString("id_cli") + " - " + rs.getString("nombre_completo"),
+                        rs.getString("gara"),
+                        rs.getString("total")
+                });
+            }
+        }
+        return cotizaciones;
+    }
+
+    /**
+     * Lista cotizaciones activas ordenadas por total (ascendente), mostrando código
+     * y nombre completo del cliente.
+     */
+    public static List<String[]> listarCotizacionesPorTotalAsc() throws SQLException {
+        List<String[]> cotizaciones = new ArrayList<>();
+        String sql = "SELECT c.ncot, c.femi, " +
+                "cl.id_cli, " +
+                "TRIM(cl.p_nomb || ' ' || COALESCE(cl.ape_p,'') || ' ' || COALESCE(cl.ape_m,'')) AS nombre_completo, " +
+                "c.gara, r.total " +
+                "FROM Cotizacion c " +
+                "JOIN Cliente cl ON cl.id_cli = c.id_cli " +
+                "JOIN FN_RESUMEN_CABECERA_COTIZACION(c.ncot) r ON r.ncot = c.ncot " +
+                "WHERE c.activo = TRUE " +
+                "ORDER BY r.total ASC";
+        try (Connection conn = DatabaseConnection.getConnection();
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                cotizaciones.add(new String[] {
+                        rs.getString("ncot"),
+                        rs.getString("femi"),
+                        rs.getString("id_cli") + " - " + rs.getString("nombre_completo"),
+                        rs.getString("gara"),
+                        rs.getString("total")
+                });
+            }
+        }
+        return cotizaciones;
+    }
+
+    /**
+     * Convierte un número simple a formato NCOT (ej: "10" → "001-000010").
+     */
+    public static String formatearNCOT(String input) {
+        if (input.matches("\\d+")) {
+            int num = Integer.parseInt(input);
+            return String.format("001-%06d", num);
+        }
+        return input;
     }
 }
 

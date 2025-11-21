@@ -7,13 +7,15 @@ import java.sql.SQLException;
 import dataBase.ClienteDB;
 
 /**
- * Panel para la gestión de clientes: agregar, modificar, eliminar, reactivar y actualizar.
+ * Panel para la gestión de clientes: agregar, modificar, eliminar, reactivar y
+ * actualizar.
  * Utiliza ClienteDB para operaciones con la base de datos.
  */
 public class ClientesPanel extends JPanel {
     private JTable tablaClientes;
     private DefaultTableModel modeloClientes;
-    private JButton btnAgregar, btnModificar, btnEliminar, btnReactivar, btnActualizar;
+    private JButton btnAgregar, btnModificar, btnEliminar, btnReactivar, btnActualizar, btnBuscar;
+    private JTextField txtBuscar;
     private Color colorFondoPanel = new Color(220, 235, 250);
     private Color colorBorde = new Color(100, 160, 220);
     private Font fuenteCampos = new Font("Segoe UI", Font.PLAIN, 16);
@@ -41,22 +43,37 @@ public class ClientesPanel extends JPanel {
         btnEliminar = new JButton("Eliminar");
         btnReactivar = new JButton("Reactivar");
         btnActualizar = new JButton("Actualizar");
+        btnBuscar = new JButton("Buscar");
 
         btnAgregar.setBackground(colorBorde);
         btnModificar.setBackground(colorBorde);
         btnEliminar.setBackground(colorBorde);
         btnReactivar.setBackground(colorBorde);
         btnActualizar.setBackground(colorBorde);
+        btnBuscar.setBackground(colorBorde);
+
         btnAgregar.setForeground(Color.WHITE);
         btnModificar.setForeground(Color.WHITE);
         btnEliminar.setForeground(Color.WHITE);
         btnReactivar.setForeground(Color.WHITE);
         btnActualizar.setForeground(Color.WHITE);
+        btnBuscar.setForeground(Color.WHITE);
+
         btnAgregar.setFont(fuenteCampos);
         btnModificar.setFont(fuenteCampos);
         btnEliminar.setFont(fuenteCampos);
         btnReactivar.setFont(fuenteCampos);
         btnActualizar.setFont(fuenteCampos);
+        btnBuscar.setFont(fuenteCampos);
+
+        txtBuscar = new JTextField(18);
+        txtBuscar.setFont(fuenteCampos);
+
+        JPanel panelBusqueda = new JPanel();
+        panelBusqueda.setBackground(colorFondoPanel);
+        panelBusqueda.add(new JLabel("Buscar nombre o RUC:"));
+        panelBusqueda.add(txtBuscar);
+        panelBusqueda.add(btnBuscar);
 
         JPanel panelBotones = new JPanel();
         panelBotones.setBackground(colorFondoPanel);
@@ -66,6 +83,7 @@ public class ClientesPanel extends JPanel {
         panelBotones.add(btnReactivar);
         panelBotones.add(btnActualizar);
 
+        add(panelBusqueda, BorderLayout.NORTH);
         add(new JScrollPane(tablaClientes), BorderLayout.CENTER);
         add(panelBotones, BorderLayout.SOUTH);
 
@@ -74,6 +92,7 @@ public class ClientesPanel extends JPanel {
         btnEliminar.addActionListener(e -> eliminarCliente());
         btnActualizar.addActionListener(e -> cargarClientes());
         btnReactivar.addActionListener(e -> mostrarVentanaReactivar());
+        btnBuscar.addActionListener(e -> buscarClientes());
     }
 
     /**
@@ -150,32 +169,40 @@ public class ClientesPanel extends JPanel {
         if (res == JOptionPane.OK_OPTION) {
             // Validación en Java antes de enviar a la BD
             if (nombre.getText().trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "El campo Nombre es obligatorio.", "Validación", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "El campo Nombre es obligatorio.", "Validación",
+                        JOptionPane.WARNING_MESSAGE);
                 return;
             }
             // Si RUC está vacío, Apellido Paterno debe estar lleno (regla de negocio)
             if (ruc.getText().trim().isEmpty() && apeP.getText().trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Para personas naturales (sin RUC), el Apellido Paterno es obligatorio.", "Validación", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "Para personas naturales (sin RUC), el Apellido Paterno es obligatorio.", "Validación",
+                        JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            // Validación de RUC/DNI: si no está vacío, debe tener 8 o 11 dígitos y solo números
+            // Validación de RUC/DNI: si no está vacío, debe tener 8 o 11 dígitos y solo
+            // números
             String rucTxt = ruc.getText().trim();
             if (!rucTxt.isEmpty()) {
                 if (!rucTxt.matches("\\d+")) {
-                    JOptionPane.showMessageDialog(this, "El campo RUC/DNI debe contener solo números.", "Validación", JOptionPane.WARNING_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "El campo RUC/DNI debe contener solo números.", "Validación",
+                            JOptionPane.WARNING_MESSAGE);
                     return;
                 }
                 if (rucTxt.length() != 8 && rucTxt.length() != 11) {
-                    JOptionPane.showMessageDialog(this, "El número de RUC/DNI debe ser de 8 o 11 dígitos.", "Validación", JOptionPane.WARNING_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "El número de RUC/DNI debe ser de 8 o 11 dígitos.",
+                            "Validación", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
             }
             try {
-                ClienteDB.insertarCliente(nombre.getText(), apeP.getText(), apeM.getText(), ruc.getText(), obs.getText());
+                ClienteDB.insertarCliente(nombre.getText(), apeP.getText(), apeM.getText(), ruc.getText(),
+                        obs.getText());
                 cargarClientes();
             } catch (SQLException ex) {
                 String msg = ex.getMessage();
-                // Solo muestra la primera línea del mensaje (sin el "Where:" ni detalles técnicos)
+                // Solo muestra la primera línea del mensaje (sin el "Where:" ni detalles
+                // técnicos)
                 if (msg != null && msg.contains("ERROR DE VALIDACIÓN")) {
                     String mensaje = msg.split("\n")[0];
                     JOptionPane.showMessageDialog(this, mensaje, "Error de Validación", JOptionPane.ERROR_MESSAGE);
@@ -197,7 +224,8 @@ public class ClientesPanel extends JPanel {
         if (fila == -1)
             return;
         String id = modeloClientes.getValueAt(fila, 0) != null ? modeloClientes.getValueAt(fila, 0).toString() : "";
-        // Obtén los datos completos del cliente desde la BD para los campos individuales
+        // Obtén los datos completos del cliente desde la BD para los campos
+        // individuales
         String nombreVal = "";
         String apePVal = "";
         String apeMVal = "";
@@ -206,7 +234,8 @@ public class ClientesPanel extends JPanel {
         try {
             int idCli = Integer.parseInt(id);
             try (java.sql.Connection conn = dataBase.DatabaseConnection.getConnection();
-                 java.sql.PreparedStatement ps = conn.prepareStatement("SELECT p_nomb, ape_p, ape_m, ruc, obs FROM Cliente WHERE id_cli = ?")) {
+                    java.sql.PreparedStatement ps = conn
+                            .prepareStatement("SELECT p_nomb, ape_p, ape_m, ruc, obs FROM Cliente WHERE id_cli = ?")) {
                 ps.setInt(1, idCli);
                 java.sql.ResultSet rs = ps.executeQuery();
                 if (rs.next()) {
@@ -237,22 +266,27 @@ public class ClientesPanel extends JPanel {
         if (res == JOptionPane.OK_OPTION) {
             // Validación en Java antes de enviar a la BD
             if (nombre.getText().trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "El campo Nombre es obligatorio.", "Validación", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "El campo Nombre es obligatorio.", "Validación",
+                        JOptionPane.WARNING_MESSAGE);
                 return;
             }
             if (ruc.getText().trim().isEmpty() && apeP.getText().trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Para personas naturales (sin RUC), el Apellido Paterno es obligatorio.", "Validación", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "Para personas naturales (sin RUC), el Apellido Paterno es obligatorio.", "Validación",
+                        JOptionPane.WARNING_MESSAGE);
                 return;
             }
             String rucTxt = ruc.getText().trim();
             String rucFinal = null;
             if (!rucTxt.isEmpty()) {
                 if (!rucTxt.matches("\\d+")) {
-                    JOptionPane.showMessageDialog(this, "El campo RUC/DNI debe contener solo números.", "Validación", JOptionPane.WARNING_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "El campo RUC/DNI debe contener solo números.", "Validación",
+                            JOptionPane.WARNING_MESSAGE);
                     return;
                 }
                 if (rucTxt.length() != 8 && rucTxt.length() != 11) {
-                    JOptionPane.showMessageDialog(this, "El número de RUC/DNI debe ser de 8 o 11 dígitos.", "Validación", JOptionPane.WARNING_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "El número de RUC/DNI debe ser de 8 o 11 dígitos.",
+                            "Validación", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
                 rucFinal = rucTxt;
@@ -297,13 +331,34 @@ public class ClientesPanel extends JPanel {
     }
 
     /**
+     * Busca clientes por nombre o RUC.
+     */
+    private void buscarClientes() {
+        String filtro = txtBuscar.getText().trim();
+        modeloClientes.setRowCount(0);
+        if (filtro.isEmpty()) {
+            cargarClientes();
+            return;
+        }
+        try {
+            for (String[] cli : ClienteDB.buscarClientes(filtro)) {
+                modeloClientes.addRow(cli);
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al buscar clientes: " + ex.getMessage());
+        }
+    }
+
+    /**
      * JTextField con placeholder para formularios.
      */
     class PlaceholderTextField extends JTextField {
         private String placeholder;
+
         public PlaceholderTextField(String placeholder) {
             this.placeholder = placeholder;
         }
+
         @Override
         protected void paintComponent(java.awt.Graphics g) {
             super.paintComponent(g);
