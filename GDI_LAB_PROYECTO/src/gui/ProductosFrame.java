@@ -8,6 +8,7 @@ import dataBase.ProductoDB;
 
 /**
  * Ventana para seleccionar productos y agregarlos a la cotización.
+ * Permite buscar y ordenar productos por descripción y precio.
  * Utiliza ProductoDB para cargar productos y valida stock.
  */
 public class ProductosFrame extends JFrame {
@@ -29,6 +30,11 @@ public class ProductosFrame extends JFrame {
     private Color colorBorde = new Color(100, 160, 220);
     private Font fuenteCampos = new Font("Segoe UI", Font.PLAIN, 16);
 
+    /**
+     * Constructor: inicializa la ventana y sus controles.
+     * 
+     * @param listener Listener para recibir el producto seleccionado.
+     */
     public ProductosFrame(ProductoListener listener) {
         this.listener = listener;
         setTitle("Seleccionar Producto");
@@ -169,6 +175,9 @@ public class ProductosFrame extends JFrame {
         dispose();
     }
 
+    /**
+     * Carga los productos en orden ascendente por precio.
+     */
     private void cargarProductosPorPrecioAsc() {
         modeloProductos.setRowCount(0);
         try {
@@ -182,6 +191,9 @@ public class ProductosFrame extends JFrame {
         }
     }
 
+    /**
+     * Carga los productos en orden descendente por precio.
+     */
     private void cargarProductosPorPrecioDesc() {
         modeloProductos.setRowCount(0);
         try {

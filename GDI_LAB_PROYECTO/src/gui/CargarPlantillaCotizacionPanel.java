@@ -7,6 +7,11 @@ import java.sql.*;
 import java.util.function.Consumer;
 import dataBase.CotizacionDB;
 
+/**
+ * Panel para cargar y seleccionar cotizaciones como plantilla.
+ * Permite buscar y ordenar cotizaciones, y seleccionar una para usar.
+ * Utiliza CotizacionDB para operaciones con la base de datos.
+ */
 public class CargarPlantillaCotizacionPanel extends JPanel {
     private JTable tablaCotizaciones;
     private DefaultTableModel modeloCotizaciones;
@@ -17,6 +22,12 @@ public class CargarPlantillaCotizacionPanel extends JPanel {
 
     private Consumer<String> onCotizacionSeleccionada;
 
+    /**
+     * Constructor: inicializa el panel y sus controles.
+     * 
+     * @param onCotizacionSeleccionada Acción a ejecutar al seleccionar una
+     *                                 cotización.
+     */
     public CargarPlantillaCotizacionPanel(Consumer<String> onCotizacionSeleccionada) {
         this.onCotizacionSeleccionada = onCotizacionSeleccionada;
         setLayout(new BorderLayout());
@@ -72,6 +83,10 @@ public class CargarPlantillaCotizacionPanel extends JPanel {
         btnOrdenTotalDesc.addActionListener(e -> cargarCotizacionesPorTotalDesc());
     }
 
+    /**
+     * Carga las cotizaciones activas en la tabla.
+     * Muestra código y nombre completo del cliente y el total.
+     */
     private void cargarCotizaciones() {
         modeloCotizaciones.setRowCount(0);
         try {
@@ -83,6 +98,9 @@ public class CargarPlantillaCotizacionPanel extends JPanel {
         }
     }
 
+    /**
+     * Acción para usar la cotización seleccionada.
+     */
     private void usarCotizacion() {
         int fila = tablaCotizaciones.getSelectedRow();
         if (fila == -1) {
@@ -95,6 +113,9 @@ public class CargarPlantillaCotizacionPanel extends JPanel {
         }
     }
 
+    /**
+     * Carga cotizaciones ordenadas por total ascendente.
+     */
     private void cargarCotizacionesPorTotalAsc() {
         modeloCotizaciones.setRowCount(0);
         try {
@@ -106,6 +127,9 @@ public class CargarPlantillaCotizacionPanel extends JPanel {
         }
     }
 
+    /**
+     * Carga cotizaciones ordenadas por total descendente.
+     */
     private void cargarCotizacionesPorTotalDesc() {
         modeloCotizaciones.setRowCount(0);
         try {

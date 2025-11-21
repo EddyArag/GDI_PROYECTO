@@ -7,6 +7,8 @@ import java.util.List;
 /**
  * Clase de acceso a datos para operaciones CRUD y consultas sobre
  * productos/servicios.
+ * Permite listar, buscar, agregar, modificar, eliminar y reactivar
+ * productos/servicios.
  */
 public class ProductoDB {
 
@@ -135,6 +137,8 @@ public class ProductoDB {
 
     /**
      * Lista productos/servicios activos ordenados por precio descendente.
+     * 
+     * @return Lista de productos ordenados por precio descendente.
      */
     public static List<String[]> listarProductosPorPrecioDesc() throws SQLException {
         List<String[]> productos = new ArrayList<>();
@@ -156,6 +160,8 @@ public class ProductoDB {
 
     /**
      * Lista productos/servicios activos ordenados por precio ascendente.
+     * 
+     * @return Lista de productos ordenados por precio ascendente.
      */
     public static List<String[]> listarProductosPorPrecioAsc() throws SQLException {
         List<String[]> productos = new ArrayList<>();

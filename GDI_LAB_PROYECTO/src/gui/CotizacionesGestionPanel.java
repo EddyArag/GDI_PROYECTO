@@ -12,6 +12,7 @@ import dataBase.CotizacionDB;
 /**
  * Panel para la gestión de cotizaciones: ver, eliminar, reactivar, modificar,
  * actualizar y exportar PDF.
+ * Permite buscar y ordenar cotizaciones, y visualizar detalles.
  * Utiliza CotizacionDB para operaciones con la base de datos.
  */
 public class CotizacionesGestionPanel extends JPanel {
@@ -114,7 +115,7 @@ public class CotizacionesGestionPanel extends JPanel {
 
     /**
      * Carga las cotizaciones activas en la tabla.
-     * Ahora muestra código y nombre completo del cliente y el total.
+     * Muestra código y nombre completo del cliente y el total.
      */
     private void cargarCotizaciones() {
         modeloCotizaciones.setRowCount(0);
@@ -284,6 +285,9 @@ public class CotizacionesGestionPanel extends JPanel {
         }
     }
 
+    /**
+     * Carga cotizaciones ordenadas por total ascendente.
+     */
     private void cargarCotizacionesPorTotalAsc() {
         modeloCotizaciones.setRowCount(0);
         try {
@@ -295,6 +299,9 @@ public class CotizacionesGestionPanel extends JPanel {
         }
     }
 
+    /**
+     * Carga cotizaciones ordenadas por total descendente.
+     */
     private void cargarCotizacionesPorTotalDesc() {
         modeloCotizaciones.setRowCount(0);
         try {

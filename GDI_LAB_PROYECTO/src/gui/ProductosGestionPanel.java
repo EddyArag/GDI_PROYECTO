@@ -9,6 +9,7 @@ import dataBase.ProductoDB;
 /**
  * Panel para la gestión de productos/servicios: agregar, modificar, eliminar,
  * reactivar y actualizar.
+ * Permite buscar y ordenar productos por descripción y precio.
  * Utiliza ProductoDB para operaciones con la base de datos.
  */
 public class ProductosGestionPanel extends JPanel {

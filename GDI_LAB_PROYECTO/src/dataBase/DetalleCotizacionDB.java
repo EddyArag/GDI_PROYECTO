@@ -6,13 +6,17 @@ import java.util.List;
 
 /**
  * Clase de acceso a datos para operaciones sobre los detalles de cotización.
+ * Permite listar, agregar, modificar y eliminar detalles de cotización.
  */
 public class DetalleCotizacionDB {
 
     /**
-     * Lista todas las líneas de detalle de una cotización usando FN_LINEAS_COTIZACION.
+     * Lista todas las líneas de detalle de una cotización usando
+     * FN_LINEAS_COTIZACION.
+     * 
      * @param ncot Número de cotización.
-     * @return Lista de detalles (ID, servicio, descripción, precio unitario, cantidad, total línea).
+     * @return Lista de detalles (ID, servicio, descripción, precio unitario,
+     *         cantidad, total línea).
      */
     public static List<String[]> listarLineasCotizacion(String ncot) throws SQLException {
         List<String[]> lineas = new ArrayList<>();

@@ -7,6 +7,7 @@ import java.util.List;
 /**
  * Clase de acceso a datos para operaciones CRUD y consultas sobre la entidad
  * Cliente.
+ * Permite listar, buscar, agregar, modificar, eliminar y reactivar clientes.
  */
 public class ClienteDB {
 

@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 
 /**
  * Clase de acceso a datos para operaciones CRUD y consultas sobre cotizaciones.
+ * Permite gestionar cotizaciones y sus detalles, así como consultas analíticas.
  */
 public class CotizacionDB {
 
@@ -293,6 +294,9 @@ public class CotizacionDB {
 
     /**
      * Convierte un número simple a formato NCOT (ej: "10" → "001-000010").
+     * 
+     * @param input Número simple o NCOT.
+     * @return NCOT en formato estándar.
      */
     public static String formatearNCOT(String input) {
         if (input.matches("\\d+")) {

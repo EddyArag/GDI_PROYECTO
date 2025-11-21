@@ -9,6 +9,7 @@ import dataBase.ClienteDB;
 /**
  * Panel para la gestión de clientes: agregar, modificar, eliminar, reactivar y
  * actualizar.
+ * Permite buscar clientes por nombre o RUC y gestionar sus datos.
  * Utiliza ClienteDB para operaciones con la base de datos.
  */
 public class ClientesPanel extends JPanel {

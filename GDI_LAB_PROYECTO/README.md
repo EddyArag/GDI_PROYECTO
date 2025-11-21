@@ -1,3 +1,88 @@
+# Sistema de Gestión de Cotizaciones GDI
+
+Este proyecto es una aplicación de escritorio desarrollada en Java con Swing para la gestión integral de cotizaciones, clientes y productos/servicios. Utiliza PostgreSQL como motor de base de datos y está orientado a empresas que requieren controlar y automatizar el proceso de cotización de servicios y productos.
+
+## Características principales
+
+- **Gestión de Cotizaciones:**  
+  - Crear, modificar, eliminar y reactivar cotizaciones.
+  - Visualizar detalles, totales, descuentos e impuestos.
+  - Buscar cotizaciones por número, ordenar por total, y exportar a PDF.
+  - Usar cotizaciones como plantilla para nuevas operaciones.
+
+- **Gestión de Clientes:**  
+  - Registrar, modificar, eliminar y reactivar clientes.
+  - Búsqueda avanzada por nombre o RUC.
+  - Visualización de datos completos y observaciones.
+
+- **Gestión de Productos/Servicios:**  
+  - Registrar, modificar, eliminar y reactivar productos y servicios.
+  - Búsqueda y orden por descripción y precio.
+  - Control de stock y precios unitarios.
+
+- **Reportes y Consultas Analíticas:**  
+  - Reporte de stock disponible y productos más cotizados.
+  - Historial de cotizaciones por cliente.
+  - Alertas de vencimiento de ofertas.
+  - Resúmenes mensuales y ranking de clientes por gasto.
+
+- **Configuración y Seguridad:**  
+  - Conexión segura a PostgreSQL.
+  - Eliminación lógica para preservar la integridad histórica.
+
+## Estructura del Proyecto
+
+- `src/`: Código fuente Java organizado por módulos (`gui`, `dataBase`, etc.).
+- `lib/`: Dependencias externas.
+- `bin/`: Archivos compilados.
+- `README.md`: Documentación y guía de uso.
+
+## Requisitos
+
+- Java 8 o superior.
+- PostgreSQL 12 o superior.
+- Ejecución previa de los scripts SQL para crear tablas, funciones y procedimientos.
+- Configuración correcta de la conexión en `src/dataBase/DatabaseConnection.java`.
+
+## Instalación y Ejecución
+
+1. Clona el repositorio.
+2. Configura la conexión a la base de datos en `src/dataBase/DatabaseConnection.java`.
+3. Compila el proyecto desde tu IDE o usando el comando:
+   ```
+   javac -d bin src/**/*.java
+   ```
+4. Ejecuta la aplicación principal:
+   ```
+   java -cp bin App
+   ```
+
+## Uso del Sistema
+
+Al iniciar la aplicación, se mostrará la ventana principal con acceso a los siguientes módulos:
+
+- **Clientes:**  
+  Permite registrar y buscar clientes, ver sus datos y gestionar su estado.
+
+- **Productos/Servicios:**  
+  Permite registrar productos y servicios, modificar precios y controlar stock.
+
+- **Cotizaciones:**  
+  Permite crear cotizaciones, agregar productos/servicios, aplicar descuentos, y exportar a PDF.
+
+- **Reportes:**  
+  Acceso a reportes analíticos y alertas.
+
+## Personalización
+
+Puedes adaptar el sistema a tus necesidades modificando los procedimientos almacenados, funciones y la lógica de negocio en los archivos Java y SQL.
+
+## Soporte y Contribuciones
+
+Para reportar errores, solicitar nuevas funcionalidades o contribuir al proyecto, utiliza el sistema de issues de GitHub o contacta al equipo de desarrollo.
+
+---
+
 ## Getting Started
 
 Welcome to the VS Code Java world. Here is a guideline to help you get started to write Java code in Visual Studio Code.
