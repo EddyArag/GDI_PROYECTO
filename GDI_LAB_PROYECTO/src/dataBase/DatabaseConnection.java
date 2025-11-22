@@ -16,11 +16,12 @@ public class DatabaseConnection {
     // - USER: usuario de la base de datos
     // - PASSWORD: contraseña de la base de datos
     private static String URL = "jdbc:postgresql://localhost:5432/sistema_cotizacion";
-    private static String USER = "innova";      // Usuario creado en script
-    private static String PASSWORD = "Soft123!";    // Contraseña del usuario
+    private static String USER = "innova"; // Usuario creado en script
+    private static String PASSWORD = "Soft123!"; // Contraseña del usuario
 
     /**
      * Obtiene una conexión JDBC a la base de datos PostgreSQL.
+     * 
      * @return Connection activa a la base de datos.
      * @throws SQLException si ocurre un error de conexión.
      */
@@ -39,14 +40,15 @@ public class DatabaseConnection {
                 boolean bdExiste = existeBaseDatos(host, portHolder[0], dbName, "postgres", "Soft123!");
                 if (!bdExiste) {
                     // Crea la base usando usuario admin provisto por el usuario
-                    final boolean[] creado = {false};
-                    final boolean[] errorAdmin = {false};
+                    final boolean[] creado = { false };
+                    final boolean[] errorAdmin = { false };
                     gui.LoginAuxCreateDB.showDialog((p, adminUser, password) -> {
                         try {
                             dataBase.CreadorCompletoDB.crearTodo(p, adminUser, password);
                             portHolder[0] = p;
                             URL = String.format("jdbc:postgresql://%s:%s/%s", host, portHolder[0], dbName);
-                            // Verifica si la base se creó correctamente usando las credenciales admin ingresadas
+                            // Verifica si la base se creó correctamente usando las credenciales admin
+                            // ingresadas
                             if (existeBaseDatos(host, portHolder[0], dbName, adminUser, password)) {
                                 creado[0] = true;
                             }
@@ -54,26 +56,33 @@ public class DatabaseConnection {
                             errorAdmin[0] = true;
                         }
                     });
-                    try { Thread.sleep(1000); } catch (InterruptedException ignore) {}
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ignore) {
+                    }
                     // Si hubo error de admin, muestra solo ese error y detén el flujo
                     if (errorAdmin[0]) {
-                        javax.swing.JOptionPane.showMessageDialog(null, "No se pudo conectar al servidor con el puerto, usuario o contraseña ingresados.\nVerifique los datos e intente nuevamente.");
+                        javax.swing.JOptionPane.showMessageDialog(null,
+                                "No se pudo conectar al servidor con el puerto, usuario o contraseña ingresados.\nVerifique los datos e intente nuevamente.");
                         throw new SQLException("Error de conexión admin.");
                     }
                     // Solo muestra error si realmente NO se creó la base
                     if (!creado[0]) {
-                        javax.swing.JOptionPane.showMessageDialog(null, "No se pudo crear la base de datos. Verifique el puerto y las credenciales de administrador.");
+                        javax.swing.JOptionPane.showMessageDialog(null,
+                                "No se pudo crear la base de datos. Verifique el puerto y las credenciales de administrador.");
                         throw new SQLException("No se pudo crear la base de datos.");
                     }
                     // Ahora intenta conectar usando innova (usuario de la aplicación)
                     try {
                         conn = DriverManager.getConnection(URL, USER, PASSWORD);
                     } catch (SQLException ex2) {
-                        javax.swing.JOptionPane.showMessageDialog(null, "No se pudo conectar a la base recién creada con el usuario de la aplicación (innova). Verifique que el usuario innova tenga permisos.");
+                        javax.swing.JOptionPane.showMessageDialog(null,
+                                "No se pudo conectar a la base recién creada con el usuario de la aplicación (innova). Verifique que el usuario innova tenga permisos.");
                         throw ex2;
                     }
                 } else {
-                    // Si la base existe pero no conecta, relanza el error para manejo de puerto/login
+                    // Si la base existe pero no conecta, relanza el error para manejo de
+                    // puerto/login
                     throw ex;
                 }
             }
@@ -95,10 +104,11 @@ public class DatabaseConnection {
             // Solo maneja error de puerto aquí
             String currentPort = portHolder[0];
             int opt = javax.swing.JOptionPane.showConfirmDialog(null,
-                "No se pudo conectar al puerto " + currentPort + ".\n¿Desea intentar con otro puerto?",
-                "Error de conexión", javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.ERROR_MESSAGE);
+                    "No se pudo conectar al puerto " + currentPort + ".\n¿Desea intentar con otro puerto?",
+                    "Error de conexión", javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.ERROR_MESSAGE);
             if (opt == javax.swing.JOptionPane.YES_OPTION) {
-                String nuevoPuerto = javax.swing.JOptionPane.showInputDialog(null, "Ingrese el nuevo puerto:", currentPort);
+                String nuevoPuerto = javax.swing.JOptionPane.showInputDialog(null, "Ingrese el nuevo puerto:",
+                        currentPort);
                 if (nuevoPuerto != null && !nuevoPuerto.trim().isEmpty()) {
                     portHolder[0] = nuevoPuerto.trim();
                     URL = String.format("jdbc:postgresql://%s:%s/%s", host, portHolder[0], dbName);
@@ -117,7 +127,7 @@ public class DatabaseConnection {
                     }
                 }
             } else {
-                final boolean[] conectado = {false};
+                final boolean[] conectado = { false };
                 PanelLoginAux.showDialog((h, p, db, user, pass) -> {
                     try {
                         String url = String.format("jdbc:postgresql://%s:%s/%s", h, p, db);
@@ -132,7 +142,8 @@ public class DatabaseConnection {
                         }
                         conectado[0] = true;
                     } catch (SQLException e) {
-                        javax.swing.JOptionPane.showMessageDialog(null, "No se pudo conectar con los datos ingresados.");
+                        javax.swing.JOptionPane.showMessageDialog(null,
+                                "No se pudo conectar con los datos ingresados.");
                     }
                 });
                 if (conectado[0]) {
@@ -175,8 +186,8 @@ public class DatabaseConnection {
     private static boolean existeBaseDatos(String host, String port, String dbName, String user, String pass) {
         try (Connection conn = DriverManager.getConnection(
                 String.format("jdbc:postgresql://%s:%s/postgres", host, port), user, pass);
-             Statement st = conn.createStatement();
-             java.sql.ResultSet rs = st.executeQuery("SELECT 1 FROM pg_database WHERE datname = '" + dbName + "'")) {
+                Statement st = conn.createStatement();
+                java.sql.ResultSet rs = st.executeQuery("SELECT 1 FROM pg_database WHERE datname = '" + dbName + "'")) {
             return rs.next();
         } catch (Exception ex) {
             return false;
@@ -200,6 +211,7 @@ public class DatabaseConnection {
             return "localhost";
         }
     }
+
     private static String getPortFromUrl() {
         // jdbc:postgresql://localhost:5432/sistema_cotizacion
         try {
@@ -216,6 +228,7 @@ public class DatabaseConnection {
             return "5432";
         }
     }
+
     private static String getDbNameFromUrl() {
         // jdbc:postgresql://localhost:5432/sistema_cotizacion
         try {
