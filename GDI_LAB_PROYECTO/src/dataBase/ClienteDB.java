@@ -43,18 +43,26 @@ public class ClienteDB {
     public static int insertarCliente(String p_nomb, String ape_p, String ape_m, String ruc, String obs)
             throws SQLException {
         int nuevoId = -1;
+        String rucLimpio = (ruc != null) ? ruc.trim() : null;
+        if (rucLimpio != null && rucLimpio.isEmpty())
+            rucLimpio = null;
+        // System.out.println("DEBUG RUC/DNI insert: [" + rucLimpio + "]"); // <--
+        // Quitar debug
         try (Connection conn = DatabaseConnection.getConnection();
                 CallableStatement cs = conn.prepareCall("CALL SP_INSERTAR_CLIENTE(?, ?, ?, ?, ?, ?)")) {
-            cs.setString(1, p_nomb); // VARCHAR(50)
-            cs.setString(2, ape_p); // VARCHAR(50)
-            cs.setString(3, ape_m); // VARCHAR(50)
-            if (ruc == null || ruc.trim().isEmpty()) {
-                cs.setNull(4, Types.CHAR); // CHAR(11) - manda null si no hay RUC
+            cs.setString(1, p_nomb);
+            cs.setString(2, ape_p);
+            cs.setString(3, ape_m);
+            if (rucLimpio == null) {
+                cs.setNull(4, Types.CHAR);
             } else {
-                cs.setString(4, ruc); // CHAR(11)
+                if (!rucLimpio.matches("\\d{8}|\\d{11}")) {
+                    throw new SQLException("El campo RUC/DNI debe contener solo números y tener 8 o 11 dígitos.");
+                }
+                cs.setString(4, rucLimpio);
             }
-            cs.setString(5, obs); // VARCHAR(200)
-            cs.registerOutParameter(6, Types.INTEGER); // OUT p_new_id_cli INT
+            cs.setString(5, obs);
+            cs.registerOutParameter(6, Types.INTEGER);
             cs.execute();
             nuevoId = cs.getInt(6);
         }
@@ -66,14 +74,26 @@ public class ClienteDB {
      */
     public static void modificarCliente(int id, String p_nomb, String ape_p, String ape_m, String ruc, String obs)
             throws SQLException {
+        String rucLimpio = (ruc != null) ? ruc.trim() : null;
+        if (rucLimpio != null && rucLimpio.isEmpty())
+            rucLimpio = null;
+        // System.out.println("DEBUG RUC/DNI update: [" + rucLimpio + "]"); // <--
+        // Quitar debug
         try (Connection conn = DatabaseConnection.getConnection();
                 CallableStatement cs = conn.prepareCall("CALL SP_MODIFICAR_CLIENTE(?, ?, ?, ?, ?, ?)")) {
-            cs.setInt(1, id); // INT
-            cs.setString(2, p_nomb); // VARCHAR(50)
-            cs.setString(3, ape_p); // VARCHAR(50)
-            cs.setString(4, ape_m); // VARCHAR(50)
-            cs.setString(5, ruc); // CHAR(11)
-            cs.setString(6, obs); // VARCHAR(200)
+            cs.setInt(1, id);
+            cs.setString(2, p_nomb);
+            cs.setString(3, ape_p);
+            cs.setString(4, ape_m);
+            if (rucLimpio == null) {
+                cs.setNull(5, Types.CHAR);
+            } else {
+                if (!rucLimpio.matches("\\d{8}|\\d{11}")) {
+                    throw new SQLException("El campo RUC/DNI debe contener solo números y tener 8 o 11 dígitos.");
+                }
+                cs.setString(5, rucLimpio);
+            }
+            cs.setString(6, obs);
             cs.execute();
         }
     }

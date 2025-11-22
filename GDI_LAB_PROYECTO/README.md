@@ -73,6 +73,14 @@ Al iniciar la aplicación, se mostrará la ventana principal con acceso a los si
 - **Reportes:**  
   Acceso a reportes analíticos y alertas.
 
+## Reportes y Exportación a PDF
+
+- El sistema incluye un **Panel de Reportes** con acceso a reportes de stock, productos más cotizados, historial de clientes, alertas de vencimiento, resumen mensual, ranking de clientes y verificación de integridad.
+- Cada reporte puede ser **exportado a PDF** con un solo clic, usando la funcionalidad de la carpeta `exportador`.
+- La exportación de cotizaciones individuales también está disponible desde el panel de cotizaciones y al generar una nueva cotización.
+
+> Consulta la documentación JavaDoc en el código fuente (`src/gui/ReportesPanel.java`, `src/exportador/ExportarReportePDF.java`, `src/exportador/ExportarCotizacionPDF.java`) para más detalles sobre el uso y la estructura de los reportes y exportaciones.
+
 ## Personalización
 
 Puedes adaptar el sistema a tus necesidades modificando los procedimientos almacenados, funciones y la lógica de negocio en los archivos Java y SQL.

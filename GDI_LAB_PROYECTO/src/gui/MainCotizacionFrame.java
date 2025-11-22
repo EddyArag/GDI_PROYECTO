@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
 import dataBase.DatabaseConnection;
+import exportador.ExportarCotizacionPDF;
 import dataBase.CotizacionDB; // Asegurar importación para DetalleCotizacion
 import java.math.BigDecimal; // IMPORTACIÓN CLAVE
 import javax.swing.table.DefaultTableModel;
@@ -43,17 +44,16 @@ public class MainCotizacionFrame extends JFrame {
     private JPanel panelGestionCotizaciones;
     private JPanel panelGestionEmpresa;
     private JPanel panelGestionBackup; // Nuevo panel
+    private JPanel panelGestionReportes; // <--- NUEVO
 
     private JButton btnGenerarCotizacion;
-
-
 
     // Cambia la variable para que sea persistente en la clase
     private int clienteSeleccionadoIndex = -1;
 
     // Colores y fuentes para la estética
     private Color colorFondoPanel = new Color(220, 235, 250); // celeste claro
-    private Color colorBorde = new Color(100, 160, 220);      // celeste más fuerte
+    private Color colorBorde = new Color(100, 160, 220); // celeste más fuerte
     private Font fuenteCampos = new Font("Segoe UI", Font.PLAIN, 16);
 
     // Reemplaza txtGarantia por areaGarantia
@@ -87,6 +87,7 @@ public class MainCotizacionFrame extends JFrame {
         panelGestionCotizaciones = crearPanelGestionCotizaciones();
         panelGestionEmpresa = crearPanelGestionEmpresa();
         panelGestionBackup = crearPanelGestionBackup();
+        panelGestionReportes = crearPanelGestionReportes(); // <--- NUEVO
 
         // Barra de menú horizontal
         JPanel barraMenu = crearBarraMenuHorizontal();
@@ -113,12 +114,14 @@ public class MainCotizacionFrame extends JFrame {
         JButton btnCotizaciones = (JButton) barraMenu.getComponent(2);
         JButton btnEmpresa = (JButton) barraMenu.getComponent(3);
         JButton btnBackup = (JButton) barraMenu.getComponent(4);
+        JButton btnReportes = (JButton) barraMenu.getComponent(5); // <--- NUEVO
 
         btnClientes.addActionListener(e -> mostrarPanelGestionUnico(ClientesPanel.class, panelGestionClientes));
         btnProductos.addActionListener(e -> mostrarPanelGestion(panelGestionProductos));
         btnCotizaciones.addActionListener(e -> mostrarPanelGestion(panelGestionCotizaciones));
         btnEmpresa.addActionListener(e -> mostrarPanelGestion(panelGestionEmpresa));
         btnBackup.addActionListener(e -> mostrarPanelGestion(panelGestionBackup));
+        btnReportes.addActionListener(e -> mostrarPanelGestion(panelGestionReportes)); // <--- NUEVO
 
         // Actualiza clientes al ganar foco la ventana principal
         this.addWindowFocusListener(new WindowAdapter() {
@@ -131,11 +134,12 @@ public class MainCotizacionFrame extends JFrame {
 
     private JPanel crearBarraMenuHorizontal() {
         JPanel panel = new JPanel();
-        panel.setLayout(new GridLayout(1, 5, 0, 0)); // 5 botones, sin espacio
+        panel.setLayout(new GridLayout(1, 6, 0, 0)); // 6 botones ahora
         panel.setBackground(new Color(200, 220, 245));
         panel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, colorBorde));
 
-        String[] nombres = { "Clientes", "Servicios/Productos", "Cotizaciones", "Empresa", "Backup/Restore" };
+        String[] nombres = { "Clientes", "Servicios/Productos", "Cotizaciones", "Empresa", "Backup/Restore",
+                "Reportes" };
         for (String nombre : nombres) {
             JButton btn = new JButton(nombre);
             btn.setBackground(colorBorde);
@@ -144,9 +148,8 @@ public class MainCotizacionFrame extends JFrame {
             btn.setFocusPainted(false);
             // Borde suave y visible para cada botón
             btn.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(80, 130, 200), 2, true),
-                BorderFactory.createEmptyBorder(12, 0, 12, 0)
-            ));
+                    BorderFactory.createLineBorder(new Color(80, 130, 200), 2, true),
+                    BorderFactory.createEmptyBorder(12, 0, 12, 0)));
             panel.add(btn);
         }
         return panel;
@@ -175,7 +178,7 @@ public class MainCotizacionFrame extends JFrame {
             if (window instanceof JFrame) {
                 JFrame frame = (JFrame) window;
                 if (frame.isVisible() && frame.getContentPane().getComponentCount() > 0 &&
-                    frame.getContentPane().getComponent(0) == panelGestion) {
+                        frame.getContentPane().getComponent(0) == panelGestion) {
                     frame.toFront();
                     return;
                 }
@@ -195,7 +198,7 @@ public class MainCotizacionFrame extends JFrame {
             if (window instanceof JFrame) {
                 JFrame frame = (JFrame) window;
                 if (frame.isVisible() && frame.getContentPane().getComponentCount() > 0 &&
-                    panelClass.isInstance(frame.getContentPane().getComponent(0))) {
+                        panelClass.isInstance(frame.getContentPane().getComponent(0))) {
                     frame.toFront();
                     return;
                 }
@@ -212,7 +215,7 @@ public class MainCotizacionFrame extends JFrame {
     private JPanel crearPanelCliente() {
         JPanel panel = new JPanel(new GridLayout(2, 5, 8, 8));
         panel.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(colorBorde, 2, true), "Datos del Cliente"));
+                BorderFactory.createLineBorder(colorBorde, 2, true), "Datos del Cliente"));
         panel.setBackground(colorFondoPanel);
 
         comboClientes = new JComboBox<>();
@@ -225,16 +228,24 @@ public class MainCotizacionFrame extends JFrame {
         txtRUC = crearCampoTexto();
         txtObs = crearCampoTexto();
 
-        panel.add(new JLabel("Seleccionar Cliente:")); panel.add(comboClientes);
-        panel.add(new JLabel("Nombre:")); panel.add(txtNombre);
-        panel.add(new JLabel("Apellido Paterno:")); panel.add(txtApellidoP);
-        panel.add(new JLabel("Apellido Materno:")); panel.add(txtApellidoM);
-        panel.add(new JLabel("RUC:")); panel.add(txtRUC);
-        panel.add(new JLabel("Observaciones:")); panel.add(txtObs);
+        panel.add(new JLabel("Seleccionar Cliente:"));
+        panel.add(comboClientes);
+        panel.add(new JLabel("Nombre:"));
+        panel.add(txtNombre);
+        panel.add(new JLabel("Apellido Paterno:"));
+        panel.add(txtApellidoP);
+        panel.add(new JLabel("Apellido Materno:"));
+        panel.add(txtApellidoM);
+        panel.add(new JLabel("RUC:"));
+        panel.add(txtRUC);
+        panel.add(new JLabel("Observaciones:"));
+        panel.add(txtObs);
 
         for (Component c : panel.getComponents()) {
-            if (c instanceof JLabel) ((JLabel)c).setFont(fuenteCampos);
-            if (c instanceof JTextField) ((JTextField)c).setEditable(false);
+            if (c instanceof JLabel)
+                ((JLabel) c).setFont(fuenteCampos);
+            if (c instanceof JTextField)
+                ((JTextField) c).setEditable(false);
         }
         return panel;
     }
@@ -242,9 +253,11 @@ public class MainCotizacionFrame extends JFrame {
     // Clase auxiliar para placeholder en JTextField (solo para cotización)
     class PlaceholderTextField extends JTextField {
         private String placeholder;
+
         public PlaceholderTextField(String placeholder) {
             this.placeholder = placeholder;
         }
+
         @Override
         protected void paintComponent(java.awt.Graphics g) {
             super.paintComponent(g);
@@ -258,12 +271,14 @@ public class MainCotizacionFrame extends JFrame {
     // Clase auxiliar para placeholder en JTextArea
     class PlaceholderTextArea extends JTextArea {
         private String placeholder;
+
         public PlaceholderTextArea(String placeholder, int rows, int cols) {
             super(rows, cols);
             this.placeholder = placeholder;
             setLineWrap(true);
             setWrapStyleWord(true);
         }
+
         @Override
         protected void paintComponent(java.awt.Graphics g) {
             super.paintComponent(g);
@@ -277,7 +292,7 @@ public class MainCotizacionFrame extends JFrame {
     private JPanel crearPanelCotizacion() {
         JPanel panel = new JPanel(new GridLayout(2, 6, 8, 8));
         panel.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(colorBorde, 2, true), "Datos de la Cotización"));
+                BorderFactory.createLineBorder(colorBorde, 2, true), "Datos de la Cotización"));
         panel.setBackground(colorFondoPanel);
 
         txtFecha = new PlaceholderTextField("AAAA-MM-DD");
@@ -307,22 +322,37 @@ public class MainCotizacionFrame extends JFrame {
 
         txtFecha.setText(java.time.LocalDate.now().toString());
 
-        panel.add(new JLabel("Fecha Emisión:")); panel.add(txtFecha);
-        panel.add(new JLabel("Condiciones:")); panel.add(txtCond);
-        panel.add(new JLabel("Garantía:")); panel.add(areaGarantia);
-        panel.add(new JLabel("Entrega Tentativa:")); panel.add(txtTentativa);
-        panel.add(new JLabel("Validez Oferta:")); panel.add(txtValidez);
-        panel.add(new JLabel("Descuento S/:")); panel.add(txtDescuento);
+        panel.add(new JLabel("Fecha Emisión:"));
+        panel.add(txtFecha);
+        panel.add(new JLabel("Condiciones:"));
+        panel.add(txtCond);
+        panel.add(new JLabel("Garantía:"));
+        panel.add(areaGarantia);
+        panel.add(new JLabel("Entrega Tentativa:"));
+        panel.add(txtTentativa);
+        panel.add(new JLabel("Validez Oferta:"));
+        panel.add(txtValidez);
+        panel.add(new JLabel("Descuento S/:"));
+        panel.add(txtDescuento);
 
         // Actualiza el resumen cuando cambia el descuento
         txtDescuento.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { actualizarResumen(); }
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { actualizarResumen(); }
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { actualizarResumen(); }
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                actualizarResumen();
+            }
+
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                actualizarResumen();
+            }
+
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                actualizarResumen();
+            }
         });
 
         for (Component c : panel.getComponents()) {
-            if (c instanceof JLabel) ((JLabel)c).setFont(fuenteCampos);
+            if (c instanceof JLabel)
+                ((JLabel) c).setFont(fuenteCampos);
         }
         return panel;
     }
@@ -330,13 +360,15 @@ public class MainCotizacionFrame extends JFrame {
     private JPanel crearPanelDetalle() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(colorBorde, 2, true), "Detalle de Cotización"));
+                BorderFactory.createLineBorder(colorBorde, 2, true), "Detalle de Cotización"));
         panel.setBackground(colorFondoPanel);
 
         modeloDetalle = new DefaultTableModel(
-            new Object[] { "ID Producto", "Producto", "Cantidad", "Precio Unitario", "Subtotal" }, 0) {
+                new Object[] { "ID Producto", "Producto", "Cantidad", "Precio Unitario", "Subtotal" }, 0) {
             @Override
-            public boolean isCellEditable(int row, int col) { return col == 2; }
+            public boolean isCellEditable(int row, int col) {
+                return col == 2;
+            }
         };
         tablaDetalle = new JTable(modeloDetalle);
         tablaDetalle.setFont(fuenteCampos);
@@ -397,7 +429,7 @@ public class MainCotizacionFrame extends JFrame {
     private JPanel crearPanelResumen() {
         JPanel panel = new JPanel(new GridLayout(5, 1, 8, 8));
         panel.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(colorBorde, 2, true), "Resumen de Costos"));
+                BorderFactory.createLineBorder(colorBorde, 2, true), "Resumen de Costos"));
         panel.setBackground(colorFondoPanel);
 
         lblSubtotal = new JLabel("Subtotal: S/ 0.00");
@@ -430,7 +462,7 @@ public class MainCotizacionFrame extends JFrame {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(colorBorde, 2, true), "Menú"));
+                BorderFactory.createLineBorder(colorBorde, 2, true), "Menú"));
         panel.setBackground(new Color(200, 220, 245));
 
         JButton btnClientes = new JButton("Clientes");
@@ -525,7 +557,9 @@ public class MainCotizacionFrame extends JFrame {
         if (filaExistente != -1) {
             nuevaCantidad += cantidadExistente;
             if (nuevaCantidad > stock) {
-                JOptionPane.showMessageDialog(this, "La cantidad total (" + nuevaCantidad + ") excede el stock disponible (" + stock + ").", "Error de Stock", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "La cantidad total (" + nuevaCantidad + ") excede el stock disponible (" + stock + ").",
+                        "Error de Stock", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             modeloDetalle.setValueAt(nuevaCantidad, filaExistente, 2);
@@ -533,7 +567,9 @@ public class MainCotizacionFrame extends JFrame {
             modeloDetalle.setValueAt(precio * nuevaCantidad, filaExistente, 4);
         } else {
             if (cantidad > stock) {
-                JOptionPane.showMessageDialog(this, "La cantidad solicitada excede el stock disponible (" + stock + ").", "Error de Stock", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "La cantidad solicitada excede el stock disponible (" + stock + ").", "Error de Stock",
+                        JOptionPane.ERROR_MESSAGE);
                 return;
             }
             double subtotal = precio * cantidad;
@@ -577,8 +613,8 @@ public class MainCotizacionFrame extends JFrame {
         int prevIndex = clienteSeleccionadoIndex;
         comboClientes.removeAllItems();
         try (Connection conn = DatabaseConnection.getConnection();
-         Statement stmt = conn.createStatement();
-         ResultSet rs = stmt.executeQuery("SELECT id_cli, nombre_completo FROM FN_LISTAR_CLIENTES()")) {
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT id_cli, nombre_completo FROM FN_LISTAR_CLIENTES()")) {
             while (rs.next()) {
                 comboClientes.addItem(rs.getInt("id_cli") + " - " + rs.getString("nombre_completo"));
             }
@@ -607,7 +643,7 @@ public class MainCotizacionFrame extends JFrame {
         }
         int idCli = Integer.parseInt(seleccionado.split(" -")[0]);
         try (Connection conn = DatabaseConnection.getConnection();
-         PreparedStatement ps = conn.prepareStatement("SELECT * FROM Cliente WHERE ID_CLI = ?")) {
+                PreparedStatement ps = conn.prepareStatement("SELECT * FROM Cliente WHERE ID_CLI = ?")) {
             ps.setInt(1, idCli);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -673,10 +709,11 @@ public class MainCotizacionFrame extends JFrame {
         try {
             CotizacionDB.crearCotizacionCompleta(ncot, idCli, idEmp, femi, desct, cond, gara, tent, vofer, detalles);
             JOptionPane.showMessageDialog(this, "Cotización generada correctamente.");
-            int res = JOptionPane.showConfirmDialog(this, "¿Desea exportar la cotización en PDF?", "Exportar PDF", JOptionPane.YES_NO_OPTION);
+            int res = JOptionPane.showConfirmDialog(this, "¿Desea exportar la cotización en PDF?", "Exportar PDF",
+                    JOptionPane.YES_NO_OPTION);
             if (res == JOptionPane.YES_OPTION) {
                 try {
-                    gui.ExportarCotizacionPDF.exportar(ncot);
+                    exportador.ExportarCotizacionPDF.exportar(ncot);
                     JOptionPane.showMessageDialog(this, "Cotización exportada a PDF correctamente.");
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this, "Error al exportar PDF: " + ex.getMessage());
@@ -714,34 +751,62 @@ public class MainCotizacionFrame extends JFrame {
     private JPanel crearPanelGestionEmpresa() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(BorderFactory.createTitledBorder("Gestión de Empresa"));
+        panel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(colorBorde, 2, true), "Gestión de Empresa"));
+        panel.setBackground(colorFondoPanel);
 
         JLabel lblLogo = new JLabel("Logo:");
         JButton btnCambiarLogo = new JButton("Cambiar Logo");
         JLabel lblDireccion = new JLabel("Dirección:");
-        JTextField txtDireccion = new JTextField(30);
+        JTextField txtDireccion = new JTextField();
         JButton btnGuardarDireccion = new JButton("Guardar Dirección");
         JLabel lblTelefono = new JLabel("Teléfono 1:");
-        JTextField txtTelefono1 = new JTextField(15);
+        JTextField txtTelefono1 = new JTextField();
         JLabel lblTelefono2 = new JLabel("Teléfono 2:");
-        JTextField txtTelefono2 = new JTextField(15);
+        JTextField txtTelefono2 = new JTextField();
         JButton btnGuardarTelefonos = new JButton("Guardar Teléfonos");
         JLabel lblMail = new JLabel("Mail:");
-        JTextField txtMail = new JTextField(30);
+        JTextField txtMail = new JTextField();
         JButton btnGuardarMail = new JButton("Guardar Mail");
+
+        // Estética para campos y botones
+        Font fontLabel = fuenteCampos;
+        Font fontField = fuenteCampos;
+        Font fontButton = new Font("Segoe UI", Font.BOLD, 15);
+
+        int anchoCampo = 600;
+        int altoCampo = 36;
+
+        for (JLabel lbl : new JLabel[] { lblLogo, lblDireccion, lblTelefono, lblTelefono2, lblMail }) {
+            lbl.setFont(fontLabel);
+        }
+        for (JTextField txt : new JTextField[] { txtDireccion, txtTelefono1, txtTelefono2, txtMail }) {
+            txt.setFont(fontField);
+            txt.setMaximumSize(new Dimension(anchoCampo, altoCampo));
+            txt.setPreferredSize(new Dimension(anchoCampo, altoCampo));
+            txt.setMinimumSize(new Dimension(anchoCampo, altoCampo));
+            txt.setBorder(BorderFactory.createLineBorder(colorBorde, 1, true));
+            txt.setAlignmentX(Component.LEFT_ALIGNMENT);
+        }
+        for (JButton btn : new JButton[] { btnCambiarLogo, btnGuardarDireccion, btnGuardarTelefonos, btnGuardarMail }) {
+            btn.setBackground(colorBorde);
+            btn.setForeground(Color.WHITE);
+            btn.setFont(fontButton);
+            btn.setFocusPainted(false);
+            btn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        }
 
         // Cargar datos actuales de la empresa (ID_EMP = 1)
         try {
-            // Dirección
             List<String[]> direcciones = dataBase.EmpresaDB.getDireccionesEmpresa(1);
             if (!direcciones.isEmpty()) {
                 txtDireccion.setText(direcciones.get(0)[1]);
             }
-            // Teléfonos
             List<String[]> telefonos = dataBase.EmpresaDB.getTelefonosEmpresa(1);
-            if (telefonos.size() > 0) txtTelefono1.setText(telefonos.get(0)[1]);
-            if (telefonos.size() > 1) txtTelefono2.setText(telefonos.get(1)[1]);
-            // Mail
+            if (telefonos.size() > 0)
+                txtTelefono1.setText(telefonos.get(0)[1]);
+            if (telefonos.size() > 1)
+                txtTelefono2.setText(telefonos.get(1)[1]);
             List<String[]> mails = dataBase.EmpresaDB.getMailsEmpresa(1);
             if (!mails.isEmpty()) {
                 txtMail.setText(mails.get(0)[1]);
@@ -750,22 +815,34 @@ public class MainCotizacionFrame extends JFrame {
             JOptionPane.showMessageDialog(panel, "Error al cargar datos de empresa: " + ex.getMessage());
         }
 
+        // Layout con espacios y alineación
+        panel.add(Box.createVerticalStrut(10));
         panel.add(lblLogo);
+        panel.add(Box.createVerticalStrut(4));
         panel.add(btnCambiarLogo);
-        panel.add(Box.createVerticalStrut(10));
+        panel.add(Box.createVerticalStrut(16));
         panel.add(lblDireccion);
+        panel.add(Box.createVerticalStrut(4));
         panel.add(txtDireccion);
+        panel.add(Box.createVerticalStrut(4));
         panel.add(btnGuardarDireccion);
-        panel.add(Box.createVerticalStrut(10));
+        panel.add(Box.createVerticalStrut(16));
         panel.add(lblTelefono);
+        panel.add(Box.createVerticalStrut(4));
         panel.add(txtTelefono1);
+        panel.add(Box.createVerticalStrut(8));
         panel.add(lblTelefono2);
+        panel.add(Box.createVerticalStrut(4));
         panel.add(txtTelefono2);
+        panel.add(Box.createVerticalStrut(4));
         panel.add(btnGuardarTelefonos);
-        panel.add(Box.createVerticalStrut(10));
+        panel.add(Box.createVerticalStrut(16));
         panel.add(lblMail);
+        panel.add(Box.createVerticalStrut(4));
         panel.add(txtMail);
+        panel.add(Box.createVerticalStrut(4));
         panel.add(btnGuardarMail);
+        panel.add(Box.createVerticalGlue());
 
         btnCambiarLogo.addActionListener(e -> {
             JFileChooser chooser = new JFileChooser();
@@ -785,7 +862,7 @@ public class MainCotizacionFrame extends JFrame {
             String dir = txtDireccion.getText().trim();
             if (!dir.isEmpty()) {
                 try (Connection conn = dataBase.DatabaseConnection.getConnection();
-                     CallableStatement cs = conn.prepareCall("{ call SP_MODIFICAR_DIR_EMPRESA(?, ?, ?) }")) {
+                        CallableStatement cs = conn.prepareCall("{ call SP_MODIFICAR_DIR_EMPRESA(?, ?, ?) }")) {
                     List<String[]> direcciones = dataBase.EmpresaDB.getDireccionesEmpresa(1);
                     int idDiremp = !direcciones.isEmpty() ? Integer.parseInt(direcciones.get(0)[0]) : 0;
                     cs.setInt(1, idDiremp);
@@ -834,7 +911,7 @@ public class MainCotizacionFrame extends JFrame {
             String mail = txtMail.getText().trim();
             if (!mail.isEmpty()) {
                 try (Connection conn = dataBase.DatabaseConnection.getConnection();
-                     CallableStatement cs = conn.prepareCall("{ call SP_MODIFICAR_MAIL_EMPRESA(?, ?, ?) }")) {
+                        CallableStatement cs = conn.prepareCall("{ call SP_MODIFICAR_MAIL_EMPRESA(?, ?, ?) }")) {
                     List<String[]> mails = dataBase.EmpresaDB.getMailsEmpresa(1);
                     int idMailemp = !mails.isEmpty() ? Integer.parseInt(mails.get(0)[0]) : 0;
                     cs.setInt(1, idMailemp);
@@ -855,7 +932,12 @@ public class MainCotizacionFrame extends JFrame {
         return new BackupRestorePanel();
     }
 
-    // Si tienes un método para modificar cotización, asegúrate de incluir el descuento:
+    private JPanel crearPanelGestionReportes() {
+        return new ReportesPanel();
+    }
+
+    // Si tienes un método para modificar cotización, asegúrate de incluir el
+    // descuento:
     // Ejemplo:
     private void modificarCabeceraCotizacion(String ncot) {
         try {
@@ -885,7 +967,7 @@ public class MainCotizacionFrame extends JFrame {
     // Método para cargar datos desde una cotización seleccionada
     private void cargarDatosDesdeCotizacion(String ncot) {
         try (Connection conn = dataBase.DatabaseConnection.getConnection();
-         PreparedStatement ps = conn.prepareStatement("SELECT desct, vofer FROM Cotizacion WHERE ncot = ?")) {
+                PreparedStatement ps = conn.prepareStatement("SELECT desct, vofer FROM Cotizacion WHERE ncot = ?")) {
             ps.setString(1, ncot);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -905,11 +987,11 @@ public class MainCotizacionFrame extends JFrame {
             modeloDetalle.setRowCount(0);
             for (String[] det : dataBase.DetalleCotizacionDB.listarLineasCotizacion(ncot)) {
                 modeloDetalle.addRow(new Object[] {
-                    det[1], // id_serv
-                    det[2], // descp
-                    det[4], // cant
-                    det[3], // punit
-                    det[5]  // subtotal
+                        det[1], // id_serv
+                        det[2], // descp
+                        det[4], // cant
+                        det[3], // punit
+                        det[5] // subtotal
                 });
             }
             actualizarResumen();

@@ -6,7 +6,8 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 
 /**
- * Panel para exportar e importar backups de la base de datos PostgreSQL usando pg_dump y psql.
+ * Panel para exportar e importar backups de la base de datos PostgreSQL usando
+ * pg_dump y psql.
  */
 public class BackupRestorePanel extends JPanel {
     private Color colorFondoPanel = new Color(220, 235, 250);
@@ -16,7 +17,7 @@ public class BackupRestorePanel extends JPanel {
     public BackupRestorePanel() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(colorBorde, 2, true), "Backup y Restore (PostgreSQL)"));
+                BorderFactory.createLineBorder(colorBorde, 2, true), "Backup y Restore (PostgreSQL)"));
         setBackground(colorFondoPanel);
 
         JButton btnExportBackup = new JButton("Exportar Backup");
@@ -49,7 +50,8 @@ public class BackupRestorePanel extends JPanel {
             File file = chooser.getSelectedFile();
             try {
                 // Ejecuta pg_dump (debe estar en el PATH del sistema)
-                String cmd = String.format("pg_dump -U postgres -h localhost -d sistema_cotizacion_gdi -F p -f \"%s\"", file.getAbsolutePath());
+                String cmd = String.format("pg_dump -U postgres -h localhost -d sistema_cotizacion_gdi -F p -f \"%s\"",
+                        file.getAbsolutePath());
                 ProcessBuilder pb = new ProcessBuilder("cmd", "/c", cmd);
                 pb.environment().put("PGPASSWORD", "eddy"); // Cambia por tu contraseña
                 Process process = pb.start();
@@ -75,7 +77,8 @@ public class BackupRestorePanel extends JPanel {
             File file = chooser.getSelectedFile();
             try {
                 // Ejecuta psql para restaurar (debe estar en el PATH del sistema)
-                String cmd = String.format("psql -U postgres -h localhost -d sistema_cotizacion_gdi -f \"%s\"", file.getAbsolutePath());
+                String cmd = String.format("psql -U postgres -h localhost -d sistema_cotizacion_gdi -f \"%s\"",
+                        file.getAbsolutePath());
                 ProcessBuilder pb = new ProcessBuilder("cmd", "/c", cmd);
                 pb.environment().put("PGPASSWORD", "eddy"); // Cambia por tu contraseña
                 Process process = pb.start();

@@ -28,6 +28,7 @@ public class ProductosGestionPanel extends JPanel {
      */
     public ProductosGestionPanel() {
         setLayout(new BorderLayout());
+        setPreferredSize(new Dimension(1100, 650)); // Más ancho y alto
         setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(colorBorde, 2, true), "Gestión de Productos/Servicios"));
         setBackground(colorFondoPanel);

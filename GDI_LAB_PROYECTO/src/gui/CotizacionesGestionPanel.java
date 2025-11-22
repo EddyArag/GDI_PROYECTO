@@ -8,6 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import dataBase.CotizacionDB;
+import exportador.ExportarCotizacionPDF;
 
 /**
  * Panel para la gestión de cotizaciones: ver, eliminar, reactivar, modificar,
@@ -31,6 +32,7 @@ public class CotizacionesGestionPanel extends JPanel {
      */
     public CotizacionesGestionPanel() {
         setLayout(new BorderLayout());
+        setPreferredSize(new Dimension(1200, 700)); // Más ancho y alto
         setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(colorBorde, 2, true), "Gestión de Cotizaciones"));
         setBackground(colorFondoPanel);
@@ -278,7 +280,7 @@ public class CotizacionesGestionPanel extends JPanel {
         }
         String ncot = modeloCotizaciones.getValueAt(fila, 0).toString();
         try {
-            gui.ExportarCotizacionPDF.exportar(ncot);
+            exportador.ExportarCotizacionPDF.exportar(ncot);
             JOptionPane.showMessageDialog(this, "Cotización exportada a PDF correctamente.");
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error al exportar PDF: " + ex.getMessage());

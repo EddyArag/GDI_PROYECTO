@@ -18,7 +18,9 @@ public class App {
      */
     public static void main(String[] args) {
         javax.swing.SwingUtilities.invokeLater(() -> {
-            new gui.MainCotizacionFrame().setVisible(true);
+            gui.MainCotizacionFrame frame = new gui.MainCotizacionFrame();
+            frame.setExtendedState(java.awt.Frame.MAXIMIZED_BOTH); // Abrir en pantalla completa
+            frame.setVisible(true);
         });
     }
 }

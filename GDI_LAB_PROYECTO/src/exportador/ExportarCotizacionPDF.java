@@ -1,4 +1,4 @@
-package gui;
+package exportador;
 
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
@@ -17,11 +17,15 @@ import dataBase.DetalleCotizacionDB;
 import javax.swing.JFileChooser;
 
 /**
- * Clase utilitaria para exportar una cotización a PDF con formato profesional usando OpenPDF.
+ * Clase utilitaria para exportar una cotización a PDF con formato profesional
+ * usando OpenPDF.
  */
 public class ExportarCotizacionPDF {
     /**
-     * Exporta la cotización indicada a un archivo PDF, solicitando ubicación al usuario.
+     * Exporta la cotización indicada a un archivo PDF, solicitando ubicación al
+     * usuario.
+     * Incluye datos de empresa, cliente, detalle, totales y condiciones.
+     * 
      * @param ncot Número de cotización.
      */
     public static void exportar(String ncot) {
@@ -49,7 +53,7 @@ public class ExportarCotizacionPDF {
             // 1. CABECERA PRINCIPAL
             PdfPTable cabecera = new PdfPTable(2);
             cabecera.setWidthPercentage(100);
-            cabecera.setWidths(new float[]{2.5f, 2.5f});
+            cabecera.setWidths(new float[] { 2.5f, 2.5f });
 
             // 1.1 Logo e info empresa
             PdfPCell cellLogoInfo = new PdfPCell();
@@ -58,8 +62,8 @@ public class ExportarCotizacionPDF {
 
             // Logo
             try (Connection conn = DatabaseConnection.getConnection();
-                 Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery("SELECT logo FROM Empresa LIMIT 1")) {
+                    Statement stmt = conn.createStatement();
+                    ResultSet rs = stmt.executeQuery("SELECT logo FROM Empresa LIMIT 1")) {
                 if (rs.next()) {
                     byte[] logoBytes = rs.getBytes("logo");
                     if (logoBytes != null && logoBytes.length > 0) {
@@ -109,7 +113,8 @@ public class ExportarCotizacionPDF {
             double total = 0;
             int idCli = 0;
             try (Connection conn = DatabaseConnection.getConnection();
-                 PreparedStatement ps = conn.prepareStatement("SELECT femi, gara, desct, igv, cond, tent, vofer, id_cli FROM Cotizacion WHERE ncot = ?")) {
+                    PreparedStatement ps = conn.prepareStatement(
+                            "SELECT femi, gara, desct, igv, cond, tent, vofer, id_cli FROM Cotizacion WHERE ncot = ?")) {
                 ps.setString(1, ncot);
                 ResultSet rs = ps.executeQuery();
                 if (rs.next()) {
@@ -125,7 +130,8 @@ public class ExportarCotizacionPDF {
             }
             // Calcula subtotal y total usando funciones
             try (Connection conn = DatabaseConnection.getConnection();
-                 PreparedStatement ps = conn.prepareStatement("SELECT CALCULAR_SUBTOTAL_COTIZACION(?) AS subtotal, CALCULAR_TOTAL_COTIZACION(?) AS total")) {
+                    PreparedStatement ps = conn.prepareStatement(
+                            "SELECT CALCULAR_SUBTOTAL_COTIZACION(?) AS subtotal, CALCULAR_TOTAL_COTIZACION(?) AS total")) {
                 ps.setString(1, ncot);
                 ps.setString(2, ncot);
                 ResultSet rs = ps.executeQuery();
@@ -165,13 +171,14 @@ public class ExportarCotizacionPDF {
             String obsCliente = "";
 
             try (Connection conn = DatabaseConnection.getConnection();
-                 PreparedStatement ps = conn.prepareStatement("SELECT p_nomb, ape_p, ape_m, ruc, obs FROM Cliente WHERE id_cli = ?")) {
+                    PreparedStatement ps = conn
+                            .prepareStatement("SELECT p_nomb, ape_p, ape_m, ruc, obs FROM Cliente WHERE id_cli = ?")) {
                 ps.setInt(1, idCli);
                 ResultSet rs = ps.executeQuery();
                 if (rs.next()) {
                     nombreCliente = (rs.getString("p_nomb") + " " +
-                                     (rs.getString("ape_p") != null ? rs.getString("ape_p") : "") + " " +
-                                     (rs.getString("ape_m") != null ? rs.getString("ape_m") : "")).trim();
+                            (rs.getString("ape_p") != null ? rs.getString("ape_p") : "") + " " +
+                            (rs.getString("ape_m") != null ? rs.getString("ape_m") : "")).trim();
                     rucCliente = rs.getString("ruc") != null ? rs.getString("ruc") : "";
                     obsCliente = rs.getString("obs") != null ? rs.getString("obs") : "";
                 }
@@ -183,7 +190,7 @@ public class ExportarCotizacionPDF {
 
             PdfPTable datosCliente = new PdfPTable(2);
             datosCliente.setWidthPercentage(100);
-            datosCliente.setWidths(new float[]{1.2f, 4f});
+            datosCliente.setWidths(new float[] { 1.2f, 4f });
             datosCliente.addCell(celdaLabel("Señores :", fontNegrita));
             datosCliente.addCell(celdaDato(nombreCliente, fontNormal));
             datosCliente.addCell(celdaLabel("RUC :", fontNegrita));
@@ -202,7 +209,7 @@ public class ExportarCotizacionPDF {
             // 3. ENCABEZADOS DE LA TABLA DE DETALLES
             PdfPTable tablaDetalle = new PdfPTable(5);
             tablaDetalle.setWidthPercentage(100);
-            tablaDetalle.setWidths(new float[]{1.2f, 1f, 4f, 1.5f, 1.5f});
+            tablaDetalle.setWidths(new float[] { 1.2f, 1f, 4f, 1.5f, 1.5f });
             tablaDetalle.addCell(celdaTabla("Cod.", fontNegrita));
             tablaDetalle.addCell(celdaTabla("Cant.", fontNegrita));
             tablaDetalle.addCell(celdaTabla("Descripción del servicio", fontNegrita));
@@ -216,8 +223,11 @@ public class ExportarCotizacionPDF {
                 tablaDetalle.addCell(celdaTabla(linea[1], fontNormal)); // Cod.
                 tablaDetalle.addCell(celdaTabla(linea[4], fontNormal, Element.ALIGN_RIGHT)); // Cant.
                 tablaDetalle.addCell(celdaTabla(linea[2], fontNormal)); // Descripción
-                tablaDetalle.addCell(celdaTabla(df.format(Double.parseDouble(linea[3])), fontNormal, Element.ALIGN_RIGHT)); // Precio Unit.
-                tablaDetalle.addCell(celdaTabla(df.format(Double.parseDouble(linea[5])), fontNormal, Element.ALIGN_RIGHT)); // Importe
+                tablaDetalle
+                        .addCell(celdaTabla(df.format(Double.parseDouble(linea[3])), fontNormal, Element.ALIGN_RIGHT)); // Precio
+                                                                                                                        // Unit.
+                tablaDetalle
+                        .addCell(celdaTabla(df.format(Double.parseDouble(linea[5])), fontNormal, Element.ALIGN_RIGHT)); // Importe
             }
             document.add(tablaDetalle);
 
@@ -226,7 +236,7 @@ public class ExportarCotizacionPDF {
             // 5. SECCIÓN DE TOTALES EN LETRAS Y RESUMEN NUMÉRICO
             PdfPTable totales = new PdfPTable(2);
             totales.setWidthPercentage(100);
-            totales.setWidths(new float[]{2.5f, 2.5f});
+            totales.setWidths(new float[] { 2.5f, 2.5f });
 
             // 5.1 Total en letras
             PdfPCell cellLetras = new PdfPCell();
@@ -250,7 +260,7 @@ public class ExportarCotizacionPDF {
                 resumen.addCell(celdaLabel("DESCUENTO :", fontNormal));
                 resumen.addCell(celdaDato(df.format(Double.parseDouble(desct)), fontNormal, Element.ALIGN_RIGHT));
             }
-            resumen.addCell(celdaLabel("IGV " + (int)(igv*100) + "% :", fontNormal));
+            resumen.addCell(celdaLabel("IGV " + (int) (igv * 100) + "% :", fontNormal));
             double igvCalc = (subtotal - Double.parseDouble(desct)) * igv;
             resumen.addCell(celdaDato(df.format(igvCalc), fontNormal, Element.ALIGN_RIGHT));
             resumen.addCell(celdaLabel("TOTAL :", fontNegrita));
@@ -265,7 +275,7 @@ public class ExportarCotizacionPDF {
             // 6. SECCIÓN DE CONDICIONES Y VALIDEZ
             PdfPTable condiciones = new PdfPTable(2);
             condiciones.setWidthPercentage(80);
-            condiciones.setWidths(new float[]{2f, 4f});
+            condiciones.setWidths(new float[] { 2f, 4f });
             condiciones.addCell(celdaLabel("Condiciones :", fontNegrita));
             condiciones.addCell(celdaDato(cond == null ? "" : cond, fontNormal));
             condiciones.addCell(celdaLabel("Forma de Pago :", fontNegrita));

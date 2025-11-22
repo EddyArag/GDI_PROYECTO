@@ -9,7 +9,8 @@ import dataBase.ClienteDB;
 /**
  * Panel para la gestión de clientes: agregar, modificar, eliminar, reactivar y
  * actualizar.
- * Permite buscar clientes por nombre o RUC y gestionar sus datos.
+ * Permite buscar clientes por nombre o RUC, ver dirección y teléfono, y
+ * gestionar sus datos.
  * Utiliza ClienteDB para operaciones con la base de datos.
  */
 public class ClientesPanel extends JPanel {
@@ -26,6 +27,7 @@ public class ClientesPanel extends JPanel {
      */
     public ClientesPanel() {
         setLayout(new BorderLayout());
+        setPreferredSize(new Dimension(1100, 650)); // Más ancho y alto
         setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(colorBorde, 2, true), "Gestión de Clientes"));
         setBackground(colorFondoPanel);
@@ -97,13 +99,40 @@ public class ClientesPanel extends JPanel {
     }
 
     /**
-     * Carga los clientes activos en la tabla.
+     * Carga los clientes activos en la tabla, mostrando también dirección y
+     * teléfono.
      */
     private void cargarClientes() {
         modeloClientes.setRowCount(0);
         try {
             for (String[] cli : ClienteDB.listarClientes()) { // Solo activos
-                modeloClientes.addRow(cli);
+                String idCli = cli[0];
+                String direccion = "";
+                String telefono = "";
+                try {
+                    // Obtener la primera dirección (si existe)
+                    java.util.List<String[]> dirs = ClienteDB.getDireccionesCliente(Integer.parseInt(idCli));
+                    if (!dirs.isEmpty()) {
+                        direccion = dirs.get(0)[1];
+                    }
+                } catch (Exception ignore) {
+                }
+                try {
+                    // Obtener el primer teléfono (si existe)
+                    java.util.List<String[]> tels = ClienteDB.getTelefonosCliente(Integer.parseInt(idCli));
+                    if (!tels.isEmpty()) {
+                        telefono = tels.get(0)[1];
+                    }
+                } catch (Exception ignore) {
+                }
+                // Agrega columnas de dirección y teléfono a la tabla si no existen
+                if (modeloClientes.getColumnCount() == 4) {
+                    modeloClientes.addColumn("Dirección");
+                    modeloClientes.addColumn("Teléfono");
+                }
+                modeloClientes.addRow(new Object[] {
+                        cli[0], cli[1], cli[2], cli[3], direccion, telefono
+                });
             }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Error al cargar clientes: " + ex.getMessage());
@@ -151,68 +180,109 @@ public class ClientesPanel extends JPanel {
     }
 
     /**
-     * Muestra un formulario para agregar un nuevo cliente.
+     * Muestra un formulario para agregar un nuevo cliente (persona o empresa).
      */
     private void agregarCliente() {
-        JTextField nombre = new PlaceholderTextField("Ej: Juan");
+        String[] opciones = { "Persona", "Empresa" };
+        int tipo = JOptionPane.showOptionDialog(this, "¿Qué tipo de cliente desea agregar?", "Tipo de Cliente",
+                JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, opciones, opciones[0]);
+        if (tipo == JOptionPane.CLOSED_OPTION)
+            return;
+
+        JTextField nombre = new PlaceholderTextField("Ej: Juan / Empresa SAC");
         JTextField apeP = new PlaceholderTextField("Ej: Pérez");
         JTextField apeM = new PlaceholderTextField("Ej: Gómez");
         JTextField ruc = new PlaceholderTextField("Ej: 20123456789");
+        JTextField direccion = new PlaceholderTextField("Ej: Av. Principal 123");
+        JTextField telefono = new PlaceholderTextField("Ej: 987654321");
         JTextField obs = new PlaceholderTextField("Observaciones...");
-        Object[] campos = {
+
+        Object[] camposPersona = {
                 "Nombre:", nombre,
                 "Apellido Paterno:", apeP,
                 "Apellido Materno:", apeM,
-                "RUC:", ruc,
+                "RUC/DNI:", ruc,
+                "Dirección:", direccion,
+                "Teléfono:", telefono,
                 "Observaciones:", obs
         };
-        int res = JOptionPane.showConfirmDialog(this, campos, "Nuevo Cliente", JOptionPane.OK_CANCEL_OPTION);
+        Object[] camposEmpresa = {
+                "Nombre:", nombre,
+                "RUC:", ruc,
+                "Dirección:", direccion,
+                "Teléfono:", telefono,
+                "Observaciones:", obs
+        };
+
+        Object[] campos = (tipo == 0) ? camposPersona : camposEmpresa;
+        int res = JOptionPane.showConfirmDialog(this, campos, "Nuevo " + opciones[tipo], JOptionPane.OK_CANCEL_OPTION);
         if (res == JOptionPane.OK_OPTION) {
-            // Validación en Java antes de enviar a la BD
-            if (nombre.getText().trim().isEmpty()) {
+            String nombreVal = nombre.getText().trim();
+            String apePVal = tipo == 0 ? apeP.getText().trim() : null;
+            String apeMVal = tipo == 0 ? apeM.getText().trim() : null;
+            String rucVal = ruc.getText().trim();
+            String dirVal = direccion.getText().trim();
+            String telVal = telefono.getText().trim();
+            String obsVal = obs.getText().trim();
+
+            // Validación
+            if (nombreVal.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "El campo Nombre es obligatorio.", "Validación",
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            // Si RUC está vacío, Apellido Paterno debe estar lleno (regla de negocio)
-            if (ruc.getText().trim().isEmpty() && apeP.getText().trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this,
-                        "Para personas naturales (sin RUC), el Apellido Paterno es obligatorio.", "Validación",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            // Validación de RUC/DNI: si no está vacío, debe tener 8 o 11 dígitos y solo
-            // números
-            String rucTxt = ruc.getText().trim();
-            if (!rucTxt.isEmpty()) {
-                if (!rucTxt.matches("\\d+")) {
-                    JOptionPane.showMessageDialog(this, "El campo RUC/DNI debe contener solo números.", "Validación",
+            if (tipo == 0) { // Persona
+                if (apePVal.isEmpty() && apeMVal.isEmpty() && rucVal.isEmpty()) {
+                    JOptionPane.showMessageDialog(this,
+                            "Debe ingresar al menos Apellido Paterno, Apellido Materno o RUC/DNI.", "Validación",
                             JOptionPane.WARNING_MESSAGE);
                     return;
                 }
-                if (rucTxt.length() != 8 && rucTxt.length() != 11) {
-                    JOptionPane.showMessageDialog(this, "El número de RUC/DNI debe ser de 8 o 11 dígitos.",
-                            "Validación", JOptionPane.WARNING_MESSAGE);
+            } else { // Empresa
+                if (rucVal.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "El campo RUC es obligatorio para empresas.", "Validación",
+                            JOptionPane.WARNING_MESSAGE);
                     return;
                 }
+                if (!rucVal.matches("\\d{11}")) {
+                    JOptionPane.showMessageDialog(this,
+                            "El RUC de la empresa debe tener exactamente 11 dígitos numéricos.", "Validación",
+                            JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                apePVal = null;
+                apeMVal = null;
             }
+            // Insertar cliente
             try {
-                ClienteDB.insertarCliente(nombre.getText(), apeP.getText(), apeM.getText(), ruc.getText(),
-                        obs.getText());
+                Integer idCli = ClienteDB.insertarCliente(
+                        nombreVal,
+                        apePVal,
+                        apeMVal,
+                        rucVal.isEmpty() ? null : rucVal,
+                        obsVal);
+                // Insertar dirección y teléfono si se ingresaron
+                if (idCli != null && idCli > 0) {
+                    if (!dirVal.isEmpty()) {
+                        try (java.sql.Connection conn = dataBase.DatabaseConnection.getConnection();
+                                java.sql.CallableStatement cs = conn.prepareCall("CALL SP_AGREGAR_DIR_CLIENTE(?, ?)")) {
+                            cs.setInt(1, idCli);
+                            cs.setString(2, dirVal);
+                            cs.execute();
+                        }
+                    }
+                    if (!telVal.isEmpty()) {
+                        try (java.sql.Connection conn = dataBase.DatabaseConnection.getConnection();
+                                java.sql.CallableStatement cs = conn.prepareCall("CALL SP_AGREGAR_TEL_CLIENTE(?, ?)")) {
+                            cs.setInt(1, idCli);
+                            cs.setString(2, telVal);
+                            cs.execute();
+                        }
+                    }
+                }
                 cargarClientes();
             } catch (SQLException ex) {
-                String msg = ex.getMessage();
-                // Solo muestra la primera línea del mensaje (sin el "Where:" ni detalles
-                // técnicos)
-                if (msg != null && msg.contains("ERROR DE VALIDACIÓN")) {
-                    String mensaje = msg.split("\n")[0];
-                    JOptionPane.showMessageDialog(this, mensaje, "Error de Validación", JOptionPane.ERROR_MESSAGE);
-                } else if (msg != null && msg.contains("ERROR DE UNICIDAD")) {
-                    String mensaje = msg.split("\n")[0];
-                    JOptionPane.showMessageDialog(this, mensaje, "Error de Unicidad", JOptionPane.ERROR_MESSAGE);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Error al agregar cliente: " + msg);
-                }
+                JOptionPane.showMessageDialog(this, "Error al agregar cliente: " + ex.getMessage());
             }
         }
     }
@@ -224,89 +294,120 @@ public class ClientesPanel extends JPanel {
         int fila = tablaClientes.getSelectedRow();
         if (fila == -1)
             return;
-        String id = modeloClientes.getValueAt(fila, 0) != null ? modeloClientes.getValueAt(fila, 0).toString() : "";
-        // Obtén los datos completos del cliente desde la BD para los campos
-        // individuales
-        String nombreVal = "";
+        String id = modeloClientes.getValueAt(fila, 0).toString();
+        String nombreVal = modeloClientes.getValueAt(fila, 1).toString();
+        String rucVal = modeloClientes.getValueAt(fila, 2) != null ? modeloClientes.getValueAt(fila, 2).toString() : "";
+        String obsVal = modeloClientes.getValueAt(fila, 3) != null ? modeloClientes.getValueAt(fila, 3).toString() : "";
+
+        // Determinar si es empresa (tiene RUC y no tiene apellidos)
+        boolean esEmpresa = false;
         String apePVal = "";
         String apeMVal = "";
-        String rucVal = "";
-        String obsVal = "";
         try {
             int idCli = Integer.parseInt(id);
             try (java.sql.Connection conn = dataBase.DatabaseConnection.getConnection();
                     java.sql.PreparedStatement ps = conn
-                            .prepareStatement("SELECT p_nomb, ape_p, ape_m, ruc, obs FROM Cliente WHERE id_cli = ?")) {
+                            .prepareStatement("SELECT ape_p, ape_m FROM Cliente WHERE id_cli = ?")) {
                 ps.setInt(1, idCli);
                 java.sql.ResultSet rs = ps.executeQuery();
                 if (rs.next()) {
-                    nombreVal = rs.getString("p_nomb") != null ? rs.getString("p_nomb") : "";
                     apePVal = rs.getString("ape_p") != null ? rs.getString("ape_p") : "";
                     apeMVal = rs.getString("ape_m") != null ? rs.getString("ape_m") : "";
-                    rucVal = rs.getString("ruc") != null ? rs.getString("ruc") : "";
-                    obsVal = rs.getString("obs") != null ? rs.getString("obs") : "";
+                    esEmpresa = (apePVal.isEmpty() && apeMVal.isEmpty() && !rucVal.isEmpty());
                 }
             }
         } catch (Exception ex) {
-            // Si falla, deja los valores vacíos
+            // Si falla, asume persona
         }
 
         JTextField nombre = new JTextField(nombreVal);
-        JTextField apeP = new JTextField(apePVal);
-        JTextField apeM = new JTextField(apeMVal);
         JTextField ruc = new JTextField(rucVal);
         JTextField obs = new JTextField(obsVal);
-        Object[] campos = {
-                "Nombre:", nombre,
-                "Apellido Paterno:", apeP,
-                "Apellido Materno:", apeM,
-                "RUC:", ruc,
-                "Observaciones:", obs
-        };
+        JTextField direccion = new JTextField();
+        JTextField telefono = new JTextField();
+        JTextField apeP = new JTextField(apePVal);
+        JTextField apeM = new JTextField(apeMVal);
+
+        Object[] campos;
+        if (esEmpresa) {
+            campos = new Object[] {
+                    "Nombre:", nombre,
+                    "RUC:", ruc,
+                    "Dirección:", direccion,
+                    "Teléfono:", telefono,
+                    "Observaciones:", obs
+            };
+        } else {
+            campos = new Object[] {
+                    "Nombre:", nombre,
+                    "Apellido Paterno:", apeP,
+                    "Apellido Materno:", apeM,
+                    "RUC/DNI:", ruc,
+                    "Dirección:", direccion,
+                    "Teléfono:", telefono,
+                    "Observaciones:", obs
+            };
+        }
+
         int res = JOptionPane.showConfirmDialog(this, campos, "Modificar Cliente", JOptionPane.OK_CANCEL_OPTION);
         if (res == JOptionPane.OK_OPTION) {
-            // Validación en Java antes de enviar a la BD
-            if (nombre.getText().trim().isEmpty()) {
+            String nombreTxt = nombre.getText().trim();
+            String apePTxt = esEmpresa ? null : apeP.getText().trim();
+            String apeMTxt = esEmpresa ? null : apeM.getText().trim();
+            String rucTxt = ruc.getText().trim();
+            String dirTxt = direccion.getText().trim();
+            String telTxt = telefono.getText().trim();
+            String obsTxt = obs.getText().trim();
+
+            // Validación
+            if (nombreTxt.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "El campo Nombre es obligatorio.", "Validación",
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            if (ruc.getText().trim().isEmpty() && apeP.getText().trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this,
-                        "Para personas naturales (sin RUC), el Apellido Paterno es obligatorio.", "Validación",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            String rucTxt = ruc.getText().trim();
-            String rucFinal = null;
-            if (!rucTxt.isEmpty()) {
-                if (!rucTxt.matches("\\d+")) {
-                    JOptionPane.showMessageDialog(this, "El campo RUC/DNI debe contener solo números.", "Validación",
+            if (!esEmpresa) {
+                if ((apePTxt == null || apePTxt.isEmpty()) && (apeMTxt == null || apeMTxt.isEmpty())
+                        && rucTxt.isEmpty()) {
+                    JOptionPane.showMessageDialog(this,
+                            "Debe ingresar al menos Apellido Paterno, Apellido Materno o RUC/DNI.", "Validación",
                             JOptionPane.WARNING_MESSAGE);
                     return;
                 }
-                if (rucTxt.length() != 8 && rucTxt.length() != 11) {
-                    JOptionPane.showMessageDialog(this, "El número de RUC/DNI debe ser de 8 o 11 dígitos.",
-                            "Validación", JOptionPane.WARNING_MESSAGE);
+            } else {
+                if (rucTxt.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "El campo RUC es obligatorio para empresas.", "Validación",
+                            JOptionPane.WARNING_MESSAGE);
                     return;
                 }
-                rucFinal = rucTxt;
             }
             try {
-                ClienteDB.modificarCliente(Integer.parseInt(id), nombre.getText(), apeP.getText(), apeM.getText(),
-                        rucFinal, obs.getText());
+                ClienteDB.modificarCliente(
+                        Integer.parseInt(id),
+                        nombreTxt,
+                        apePTxt,
+                        apeMTxt,
+                        rucTxt.isEmpty() ? null : rucTxt,
+                        obsTxt);
+                // Actualizar dirección y teléfono si se ingresaron
+                if (!dirTxt.isEmpty()) {
+                    try (java.sql.Connection conn = dataBase.DatabaseConnection.getConnection();
+                            java.sql.CallableStatement cs = conn.prepareCall("CALL SP_AGREGAR_DIR_CLIENTE(?, ?)")) {
+                        cs.setInt(1, Integer.parseInt(id));
+                        cs.setString(2, dirTxt);
+                        cs.execute();
+                    }
+                }
+                if (!telTxt.isEmpty()) {
+                    try (java.sql.Connection conn = dataBase.DatabaseConnection.getConnection();
+                            java.sql.CallableStatement cs = conn.prepareCall("CALL SP_AGREGAR_TEL_CLIENTE(?, ?)")) {
+                        cs.setInt(1, Integer.parseInt(id));
+                        cs.setString(2, telTxt);
+                        cs.execute();
+                    }
+                }
                 cargarClientes();
             } catch (SQLException ex) {
-                String msg = ex.getMessage();
-                if (msg != null && msg.contains("ERROR DE VALIDACIÓN")) {
-                    String mensaje = msg.split("\n")[0];
-                    JOptionPane.showMessageDialog(this, mensaje, "Error de Validación", JOptionPane.ERROR_MESSAGE);
-                } else if (msg != null && msg.contains("ERROR DE UNICIDAD")) {
-                    String mensaje = msg.split("\n")[0];
-                    JOptionPane.showMessageDialog(this, mensaje, "Error de Unicidad", JOptionPane.ERROR_MESSAGE);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Error al modificar cliente: " + msg);
-                }
+                JOptionPane.showMessageDialog(this, "Error al modificar cliente: " + ex.getMessage());
             }
         }
     }
