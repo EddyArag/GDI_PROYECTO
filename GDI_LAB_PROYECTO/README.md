@@ -2,62 +2,73 @@
 
 Este proyecto es una aplicación de escritorio desarrollada en Java con Swing para la gestión integral de cotizaciones, clientes y productos/servicios. Utiliza PostgreSQL como motor de base de datos y está orientado a empresas que requieren controlar y automatizar el proceso de cotización de servicios y productos.
 
-## Características principales
+---
 
-- **Gestión de Cotizaciones:**  
-  - Crear, modificar, eliminar y reactivar cotizaciones.
-  - Visualizar detalles, totales, descuentos e impuestos.
-  - Buscar cotizaciones por número, ordenar por total, y exportar a PDF.
-  - Usar cotizaciones como plantilla para nuevas operaciones.
+## **Requisitos para la Ejecución**
 
-- **Gestión de Clientes:**  
-  - Registrar, modificar, eliminar y reactivar clientes.
-  - Búsqueda avanzada por nombre o RUC.
-  - Visualización de datos completos y observaciones.
+Antes de ejecutar el sistema, asegúrate de cumplir con los siguientes requisitos:
 
-- **Gestión de Productos/Servicios:**  
-  - Registrar, modificar, eliminar y reactivar productos y servicios.
-  - Búsqueda y orden por descripción y precio.
-  - Control de stock y precios unitarios.
+- **PostgreSQL** versión **mínima 15** (recomendado 15.4 o superior, probado hasta 17.6).
+- **Java** versión **21** (JDK 21).
+- **Dependencias externas** incluidas en la carpeta `lib/`.
 
-- **Reportes y Consultas Analíticas:**  
-  - Reporte de stock disponible y productos más cotizados.
-  - Historial de cotizaciones por cliente.
-  - Alertas de vencimiento de ofertas.
-  - Resúmenes mensuales y ranking de clientes por gasto.
+### **Configuración del Puerto de PostgreSQL**
 
-- **Configuración y Seguridad:**  
-  - Conexión segura a PostgreSQL.
-  - Eliminación lógica para preservar la integridad histórica.
+- Por defecto, el sistema está configurado para conectarse al puerto **5432** de PostgreSQL.
+- **Si tu PostgreSQL está en otro puerto** (por ejemplo, **5433**), debes cambiar el puerto en el archivo de conexión:
+  1. Abre el archivo `src/dataBase/DatabaseConnection.java`.
+  2. Busca la línea donde aparece el puerto (ejemplo: `5432`).
+  3. Si tu puerto es `5433`, reemplaza **5432** por **5433** usando la función de búsqueda y reemplazo (Ctrl+F o Buscar/Reemplazar en tu editor).
+  4. Guarda los cambios.
 
-## Estructura del Proyecto
+  Ejemplo de línea a modificar:
+  ```java
+  private static final String URL = "jdbc:postgresql://localhost:5432/sistema_cotizacion_gdi";
+  // Cambia 5432 por 5433 si tu PostgreSQL está en ese puerto
+  ```
 
-- `src/`: Código fuente Java organizado por módulos (`gui`, `dataBase`, etc.).
-- `lib/`: Dependencias externas.
-- `bin/`: Archivos compilados.
-- `README.md`: Documentación y guía de uso.
+- **Puedes colocar el puerto que corresponda a tu instalación de PostgreSQL** en esa línea.
 
-## Requisitos
+---
 
-- Java 8 o superior.
-- PostgreSQL 12 o superior.
-- Ejecución previa de los scripts SQL para crear tablas, funciones y procedimientos.
-- Configuración correcta de la conexión en `src/dataBase/DatabaseConnection.java`.
+## **Instalación y Ejecución**
 
-## Instalación y Ejecución
+### 1. **Carga de la Base de Datos**
 
-1. Clona el repositorio.
-2. Configura la conexión a la base de datos en `src/dataBase/DatabaseConnection.java`.
-3. Compila el proyecto desde tu IDE o usando el comando:
+- Si **NO tienes la base de datos cargada**, debes ejecutar previamente los scripts SQL proporcionados para crear las tablas, funciones y procedimientos necesarios.
+- Si **YA tienes la base de datos cargada**, puedes omitir este paso y continuar con la ejecución del sistema.
+
+### 2. **Configuración de la Conexión**
+
+- Abre el archivo `src/dataBase/DatabaseConnection.java`.
+- Edita los siguientes campos para que coincidan con tu configuración de PostgreSQL:
+  - `URL`: Host, puerto y nombre de la base de datos.
+  - `USER`: Usuario de la base de datos.
+  - `PASSWORD`: Contraseña de la base de datos.
+
+  Ejemplo:
+  ```java
+  private static final String URL = "jdbc:postgresql://localhost:5432/sistema_cotizacion_gdi";
+  private static final String USER = "postgres";
+  private static final String PASSWORD = "tu_contraseña";
+  ```
+
+- **Si tu puerto es diferente a 5432**, cámbialo como se explicó arriba.
+
+### 3. **Compilación y Ejecución**
+
+1. Compila el proyecto desde tu IDE o usando el comando:
    ```
    javac -d bin src/**/*.java
    ```
-4. Ejecuta la aplicación principal:
+2. Ejecuta la aplicación principal:
    ```
    java -cp bin App
    ```
 
-## Uso del Sistema
+---
+
+## **Uso del Sistema**
 
 Al iniciar la aplicación, se mostrará la ventana principal con acceso a los siguientes módulos:
 
@@ -73,7 +84,9 @@ Al iniciar la aplicación, se mostrará la ventana principal con acceso a los si
 - **Reportes:**  
   Acceso a reportes analíticos y alertas.
 
-## Reportes y Exportación a PDF
+---
+
+## **Reportes y Exportación a PDF**
 
 - El sistema incluye un **Panel de Reportes** con acceso a reportes de stock, productos más cotizados, historial de clientes, alertas de vencimiento, resumen mensual, ranking de clientes y verificación de integridad.
 - Cada reporte puede ser **exportado a PDF** con un solo clic, usando la funcionalidad de la carpeta `exportador`.
@@ -81,75 +94,16 @@ Al iniciar la aplicación, se mostrará la ventana principal con acceso a los si
 
 > Consulta la documentación JavaDoc en el código fuente (`src/gui/ReportesPanel.java`, `src/exportador/ExportarReportePDF.java`, `src/exportador/ExportarCotizacionPDF.java`) para más detalles sobre el uso y la estructura de los reportes y exportaciones.
 
-## Personalización
+---
+
+## **Personalización**
 
 Puedes adaptar el sistema a tus necesidades modificando los procedimientos almacenados, funciones y la lógica de negocio en los archivos Java y SQL.
 
-## Soporte y Contribuciones
+---
+
+## **Soporte y Contribuciones**
 
 Para reportar errores, solicitar nuevas funcionalidades o contribuir al proyecto, utiliza el sistema de issues de GitHub o contacta al equipo de desarrollo.
 
 ---
-
-## Getting Started
-
-Welcome to the VS Code Java world. Here is a guideline to help you get started to write Java code in Visual Studio Code.
-
-## Folder Structure
-
-The workspace contains two folders by default, where:
-
-- `src`: the folder to maintain sources
-- `lib`: the folder to maintain dependencies
-
-Meanwhile, the compiled output files will be generated in the `bin` folder by default.
-
-> If you want to customize the folder structure, open `.vscode/settings.json` and update the related settings there.
-
-## Dependency Management
-
-The `JAVA PROJECTS` view allows you to manage your dependencies. More details can be found [here](https://github.com/microsoft/vscode-java-dependency#manage-dependencies).
-
-## Database Configuration
-
-Before running the application, you must configure the database connection:
-
-1. Open `src/dataBase/DatabaseConnection.java`.
-2. Edit the following fields to match your PostgreSQL setup:
-   - `URL`: Host, port, and database name.
-   - `USER`: Database username.
-   - `PASSWORD`: Database password.
-
-Example:
-```java
-private static final String URL = "jdbc:postgresql://localhost:5432/sistema_cotizacion_gdi";
-private static final String USER = "postgres";
-private static final String PASSWORD = "your_password";
-```
-
-**Important:**  
-You must have a PostgreSQL database created with the name specified in `URL`, and all required tables, functions, and procedures must be loaded.  
-Make sure you have previously executed all the provided SQL scripts to set up the schema and initial data.
-
----
-
-## Configuración de la Base de Datos
-
-Antes de ejecutar la aplicación, debes configurar la conexión a la base de datos:
-
-1. Abre `src/dataBase/DatabaseConnection.java`.
-2. Edita los siguientes campos para que coincidan con tu configuración de PostgreSQL:
-   - `URL`: Host, puerto y nombre de la base de datos.
-   - `USER`: Usuario de la base de datos.
-   - `PASSWORD`: Contraseña de la base de datos.
-
-Ejemplo:
-```java
-private static final String URL = "jdbc:postgresql://localhost:5432/sistema_cotizacion_gdi";
-private static final String USER = "postgres";
-private static final String PASSWORD = "tu_contraseña";
-```
-
-**Importante:**  
-Debes tener creada una base de datos PostgreSQL con el nombre especificado en `URL`, y todas las tablas, funciones y procedimientos necesarios deben estar cargados.  
-Asegúrate de haber ejecutado previamente todos los scripts SQL proporcionados para configurar el esquema y los datos iniciales.
