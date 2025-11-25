@@ -7,7 +7,12 @@ import java.io.File;
 
 /**
  * Panel para exportar e importar backups de la base de datos PostgreSQL usando
- * pg_dump y psql.
+ * las utilidades del cliente (pg_dump y psql).
+ *
+ * Notas:
+ * - pg_dump y psql deben estar disponibles en el PATH del sistema donde se ejecute la aplicación.
+ * - Actualmente la contraseña se inyecta en la variable de entorno PGPASSWORD; en producción
+ *   se recomienda usar un mecanismo más seguro (archivo .pgpass o administración de secretos).
  */
 public class BackupRestorePanel extends JPanel {
     private Color colorFondoPanel = new Color(220, 235, 250);
@@ -41,6 +46,13 @@ public class BackupRestorePanel extends JPanel {
 
     /**
      * Exporta la base de datos a un archivo usando pg_dump.
+     * Abre un JFileChooser para seleccionar la ubicación y lanza un proceso externo.
+     * Se muestra un diálogo con el resultado de la operación.
+     *
+     * Precauciones:
+     * - El comando se ejecuta en el shell del sistema ("cmd /c"), por lo que la sintaxis
+     *   está orientada a Windows. Ajustar si se quiere compatibilidad multiplataforma.
+     * - La contraseña está en claro en la variable de entorno PGPASSWORD (línea marcada).
      */
     private void exportarBackup(ActionEvent e) {
         JFileChooser chooser = new JFileChooser();
@@ -53,6 +65,8 @@ public class BackupRestorePanel extends JPanel {
                 String cmd = String.format("pg_dump -U postgres -h localhost -d sistema_cotizacion_gdi -F p -f \"%s\"",
                         file.getAbsolutePath());
                 ProcessBuilder pb = new ProcessBuilder("cmd", "/c", cmd);
+                // ATENCIÓN: aquí se establece la contraseña en la variable de entorno.
+                // Cambiar el mecanismo de autenticación para entornos de producción.
                 pb.environment().put("PGPASSWORD", "eddy"); // Cambia por tu contraseña
                 Process process = pb.start();
                 int exitCode = process.waitFor();
@@ -62,6 +76,7 @@ public class BackupRestorePanel extends JPanel {
                     JOptionPane.showMessageDialog(this, "Error al exportar backup. Verifica pg_dump y permisos.");
                 }
             } catch (Exception ex) {
+                // Mostrar mensaje compacto del error para ayudar al diagnóstico.
                 JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
             }
         }
@@ -69,6 +84,9 @@ public class BackupRestorePanel extends JPanel {
 
     /**
      * Importa un archivo de backup a la base de datos usando psql.
+     * Pide al usuario seleccionar el archivo y ejecuta psql para cargarlo.
+     *
+     * Precauciones similares a exportarBackup (psql en PATH, PGPASSWORD en entorno).
      */
     private void importarBackup(ActionEvent e) {
         JFileChooser chooser = new JFileChooser();
@@ -80,6 +98,7 @@ public class BackupRestorePanel extends JPanel {
                 String cmd = String.format("psql -U postgres -h localhost -d sistema_cotizacion_gdi -f \"%s\"",
                         file.getAbsolutePath());
                 ProcessBuilder pb = new ProcessBuilder("cmd", "/c", cmd);
+                // ATENCIÓN: contraseña expuesta en variable de entorno.
                 pb.environment().put("PGPASSWORD", "eddy"); // Cambia por tu contraseña
                 Process process = pb.start();
                 int exitCode = process.waitFor();

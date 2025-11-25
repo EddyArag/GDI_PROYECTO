@@ -3,17 +3,33 @@ package gui;
 import java.awt.*;
 import javax.swing.*;
 
+/**
+ * Diálogo para recopilar credenciales de administrador (postgres) necesarias
+ * para crear la base de datos y la estructura inicial.
+ *
+ * No realiza la creación directamente; invoca el callback con los datos ingresados.
+ */
 public class LoginAuxCreateDB extends JDialog {
+    /**
+     * Callback que recibe puerto, usuario y contraseña para realizar la creación.
+     */
     public interface CreateDBCallback {
         void onCreate(String port, String user, String password);
     }
 
+    /**
+     * Muestra el diálogo de forma modal y simple.
+     */
     public static void showDialog(CreateDBCallback callback) {
         LoginAuxCreateDB dialog = new LoginAuxCreateDB(callback);
         dialog.setModal(true);
         dialog.setVisible(true);
     }
 
+    /**
+     * Constructor que crea la interfaz y valida que los campos no estén vacíos.
+     * Al confirmar, invoca el callback y cierra el diálogo.
+     */
     public LoginAuxCreateDB(CreateDBCallback callback) {
         setTitle("Crear Base de Datos (Postgres)");
         setSize(400, 260);
@@ -84,10 +100,11 @@ public class LoginAuxCreateDB extends JDialog {
             String user = txtUser.getText().trim();
             String pass = new String(txtPass.getPassword());
             if (port.isEmpty() || user.isEmpty() || pass.isEmpty()) {
+                // Muestra error claro en la parte inferior del diálogo.
                 lblError.setText("Debe ingresar puerto, usuario y contraseña.");
                 return;
             }
-            // No mostrar mensaje de "Creación y carga iniciada" aquí, solo cerrar el diálogo
+            // No mostrar mensaje adicional aquí; delegar la acción al callback.
             callback.onCreate(port, user, pass);
             dispose();
         });
