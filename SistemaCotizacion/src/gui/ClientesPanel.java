@@ -118,11 +118,15 @@ public class ClientesPanel extends JPanel {
                 } catch (Exception ignore) {
                 }
                 try {
-                    // Obtener el primer teléfono (si existe)
+                    // Obtener todos los teléfonos y unirlos por coma
                     java.util.List<String[]> tels = ClienteDB.getTelefonosCliente(Integer.parseInt(idCli));
-                    if (!tels.isEmpty()) {
-                        telefono = tels.get(0)[1];
+                    java.util.List<String> telList = new java.util.ArrayList<>();
+                    for (String[] tel : tels) {
+                        if (tel.length > 1 && tel[1] != null && !tel[1].isEmpty()) {
+                            telList.add(tel[1]);
+                        }
                     }
+                    telefono = String.join(", ", telList);
                 } catch (Exception ignore) {
                 }
                 // Agrega columnas de dirección y teléfono a la tabla si no existen
@@ -189,79 +193,104 @@ public class ClientesPanel extends JPanel {
         if (tipo == JOptionPane.CLOSED_OPTION)
             return;
 
-        JTextField nombre = new PlaceholderTextField("Ej: Juan / Empresa SAC");
-        JTextField apeP = new PlaceholderTextField("Ej: Pérez");
-        JTextField apeM = new PlaceholderTextField("Ej: Gómez");
-        JTextField ruc = new PlaceholderTextField("Ej: 20123456789");
-        JTextField direccion = new PlaceholderTextField("Ej: Av. Principal 123");
-        JTextField telefono = new PlaceholderTextField("Ej: 987654321");
-        JTextField obs = new PlaceholderTextField("Observaciones...");
+        while (true) { // Bucle para reintentar si hay error en teléfonos
+            JTextField nombre = new PlaceholderTextField("Ej: Juan / Empresa SAC");
+            JTextField apeP = new PlaceholderTextField("Ej: Pérez");
+            JTextField apeM = new PlaceholderTextField("Ej: Gómez");
+            JTextField ruc = new PlaceholderTextField("Ej: 20123456789");
+            JTextField direccion = new PlaceholderTextField("Ej: Av. Principal 123");
+            JTextField obs = new PlaceholderTextField("Observaciones...");
 
-        Object[] camposPersona = {
-                "Nombre:", nombre,
-                "Apellido Paterno:", apeP,
-                "Apellido Materno:", apeM,
-                "RUC/DNI:", ruc,
-                "Dirección:", direccion,
-                "Teléfono:", telefono,
-                "Observaciones:", obs
-        };
-        Object[] camposEmpresa = {
-                "Nombre:", nombre,
-                "RUC:", ruc,
-                "Dirección:", direccion,
-                "Teléfono:", telefono,
-                "Observaciones:", obs
-        };
+            JPanel panelTelefonos = new JPanel();
+            panelTelefonos.setLayout(new BoxLayout(panelTelefonos, BoxLayout.Y_AXIS));
+            java.util.List<JTextField> telefonosFields = new java.util.ArrayList<>();
+            JButton btnAgregarTelefono = new JButton("Agregar Teléfono");
+            btnAgregarTelefono.addActionListener(ev -> {
+                JTextField nuevoTel = new PlaceholderTextField("Ej: 987654321");
+                telefonosFields.add(nuevoTel);
+                panelTelefonos.add(nuevoTel);
+                panelTelefonos.revalidate();
+                panelTelefonos.repaint();
+            });
+            btnAgregarTelefono.doClick();
 
-        Object[] campos = (tipo == 0) ? camposPersona : camposEmpresa;
-        int res = JOptionPane.showConfirmDialog(this, campos, "Nuevo " + opciones[tipo], JOptionPane.OK_CANCEL_OPTION);
-        if (res == JOptionPane.OK_OPTION) {
+            Object[] camposPersona = {
+                    "Nombre:", nombre,
+                    "Apellido Paterno:", apeP,
+                    "Apellido Materno:", apeM,
+                    "RUC/DNI:", ruc,
+                    "Dirección:", direccion,
+                    "Teléfonos:", panelTelefonos,
+                    btnAgregarTelefono,
+                    "Observaciones:", obs
+            };
+            Object[] camposEmpresa = {
+                    "Nombre:", nombre,
+                    "RUC:", ruc,
+                    "Dirección:", direccion,
+                    "Teléfonos:", panelTelefonos,
+                    btnAgregarTelefono,
+                    "Observaciones:", obs
+            };
+
+            Object[] campos = (tipo == 0) ? camposPersona : camposEmpresa;
+            int res = JOptionPane.showConfirmDialog(this, campos, "Nuevo " + opciones[tipo],
+                    JOptionPane.OK_CANCEL_OPTION);
+            if (res != JOptionPane.OK_OPTION)
+                return;
+
             String nombreVal = nombre.getText().trim();
             String apePVal = tipo == 0 ? apeP.getText().trim() : null;
             String apeMVal = tipo == 0 ? apeM.getText().trim() : null;
             String rucVal = ruc.getText().trim();
             String dirVal = direccion.getText().trim();
-            String telVal = telefono.getText().trim();
             String obsVal = obs.getText().trim();
+
+            java.util.List<String> telefonos = new java.util.ArrayList<>();
+            for (JTextField tf : telefonosFields) {
+                String tel = tf.getText().trim();
+                if (!tel.isEmpty())
+                    telefonos.add(tel);
+            }
 
             // Validación
             if (nombreVal.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "El campo Nombre es obligatorio.", "Validación",
                         JOptionPane.WARNING_MESSAGE);
-                return;
+                continue;
             }
             if (tipo == 0) { // Persona
                 if (apePVal.isEmpty() && apeMVal.isEmpty() && rucVal.isEmpty()) {
                     JOptionPane.showMessageDialog(this,
                             "Debe ingresar al menos Apellido Paterno, Apellido Materno o RUC/DNI.", "Validación",
                             JOptionPane.WARNING_MESSAGE);
-                    return;
+                    continue;
                 }
             } else { // Empresa
                 if (rucVal.isEmpty()) {
                     JOptionPane.showMessageDialog(this, "El campo RUC es obligatorio para empresas.", "Validación",
                             JOptionPane.WARNING_MESSAGE);
-                    return;
+                    continue;
                 }
                 if (!rucVal.matches("\\d{11}")) {
                     JOptionPane.showMessageDialog(this,
                             "El RUC de la empresa debe tener exactamente 11 dígitos numéricos.", "Validación",
                             JOptionPane.WARNING_MESSAGE);
-                    return;
+                    continue;
                 }
                 apePVal = null;
                 apeMVal = null;
             }
             // Insertar cliente
+            Integer idCli = null;
             try {
-                Integer idCli = ClienteDB.insertarCliente(
+                idCli = ClienteDB.insertarCliente(
                         nombreVal,
                         apePVal,
                         apeMVal,
                         rucVal.isEmpty() ? null : rucVal,
                         obsVal);
-                // Insertar dirección y teléfono si se ingresaron
+                // Insertar dirección si se ingresó
                 if (idCli != null && idCli > 0) {
                     if (!dirVal.isEmpty()) {
                         try (java.sql.Connection conn = dataBase.DatabaseConnection.getConnection();
@@ -271,18 +300,34 @@ public class ClientesPanel extends JPanel {
                             cs.execute();
                         }
                     }
-                    if (!telVal.isEmpty()) {
+                    // Insertar teléfonos (uno o varios)
+                    if (!telefonos.isEmpty()) {
                         try (java.sql.Connection conn = dataBase.DatabaseConnection.getConnection();
-                                java.sql.CallableStatement cs = conn.prepareCall("CALL SP_AGREGAR_TEL_CLIENTE(?, ?)")) {
+                                java.sql.CallableStatement cs = conn
+                                        .prepareCall("CALL SP_MODIFICAR_TELEFONO_CLIENTE(?, ?)")) {
                             cs.setInt(1, idCli);
-                            cs.setString(2, telVal);
+                            cs.setArray(2, conn.createArrayOf("text", telefonos.toArray()));
                             cs.execute();
                         }
                     }
                 }
                 cargarClientes();
+                break; // Éxito, salir del bucle
             } catch (SQLException ex) {
-                JOptionPane.showMessageDialog(this, "Error al agregar cliente: " + ex.getMessage());
+                // Solo muestra la primera línea del mensaje de error
+                String msg = ex.getMessage();
+                if (msg != null && msg.contains("\n")) {
+                    msg = msg.substring(0, msg.indexOf('\n'));
+                }
+                // Si ya se insertó el cliente pero falló el teléfono, eliminar el cliente
+                if (idCli != null && idCli > 0) {
+                    try {
+                        ClienteDB.eliminarLogicoCliente(idCli);
+                    } catch (Exception ignore) {
+                    }
+                }
+                JOptionPane.showMessageDialog(this, "Error al agregar cliente: " + msg);
+                // Repite el formulario para corregir
             }
         }
     }
@@ -295,38 +340,102 @@ public class ClientesPanel extends JPanel {
         if (fila == -1)
             return;
         String id = modeloClientes.getValueAt(fila, 0).toString();
-        String nombreVal = modeloClientes.getValueAt(fila, 1).toString();
-        String rucVal = modeloClientes.getValueAt(fila, 2) != null ? modeloClientes.getValueAt(fila, 2).toString() : "";
-        String obsVal = modeloClientes.getValueAt(fila, 3) != null ? modeloClientes.getValueAt(fila, 3).toString() : "";
 
-        // Determinar si es empresa (tiene RUC y no tiene apellidos)
-        boolean esEmpresa = false;
+        // Obtener datos correctos de la BD
+        String nombreVal = "";
         String apePVal = "";
         String apeMVal = "";
+        String rucVal = "";
+        String obsVal = "";
+        String dirVal = "";
+        java.util.List<String> telefonosActuales = new java.util.ArrayList<>();
+        boolean esEmpresa = false;
         try {
             int idCli = Integer.parseInt(id);
             try (java.sql.Connection conn = dataBase.DatabaseConnection.getConnection();
                     java.sql.PreparedStatement ps = conn
-                            .prepareStatement("SELECT ape_p, ape_m FROM Cliente WHERE id_cli = ?")) {
+                            .prepareStatement("SELECT p_nomb, ape_p, ape_m, ruc, obs FROM Cliente WHERE id_cli = ?")) {
                 ps.setInt(1, idCli);
                 java.sql.ResultSet rs = ps.executeQuery();
                 if (rs.next()) {
+                    nombreVal = rs.getString("p_nomb") != null ? rs.getString("p_nomb") : "";
                     apePVal = rs.getString("ape_p") != null ? rs.getString("ape_p") : "";
                     apeMVal = rs.getString("ape_m") != null ? rs.getString("ape_m") : "";
+                    rucVal = rs.getString("ruc") != null ? rs.getString("ruc") : "";
+                    obsVal = rs.getString("obs") != null ? rs.getString("obs") : "";
                     esEmpresa = (apePVal.isEmpty() && apeMVal.isEmpty() && !rucVal.isEmpty());
                 }
             }
+            // Dirección (primera)
+            java.util.List<String[]> dirs = dataBase.ClienteDB.getDireccionesCliente(Integer.parseInt(id));
+            if (!dirs.isEmpty()) {
+                dirVal = dirs.get(0)[1];
+            }
+            // Teléfonos
+            java.util.List<String[]> tels = dataBase.ClienteDB.getTelefonosCliente(Integer.parseInt(id));
+            for (String[] tel : tels) {
+                if (tel.length > 1 && tel[1] != null && !tel[1].isEmpty())
+                    telefonosActuales.add(tel[1]);
+            }
         } catch (Exception ex) {
-            // Si falla, asume persona
+            // Si falla, deja los valores vacíos
         }
 
         JTextField nombre = new JTextField(nombreVal);
         JTextField ruc = new JTextField(rucVal);
         JTextField obs = new JTextField(obsVal);
-        JTextField direccion = new JTextField();
-        JTextField telefono = new JTextField();
+        JTextField direccion = new JTextField(dirVal);
         JTextField apeP = new JTextField(apePVal);
         JTextField apeM = new JTextField(apeMVal);
+
+        // Panel para teléfonos dinámicos con botón eliminar
+        JPanel panelTelefonos = new JPanel();
+        panelTelefonos.setLayout(new BoxLayout(panelTelefonos, BoxLayout.Y_AXIS));
+        java.util.List<JTextField> telefonosFields = new java.util.ArrayList<>();
+
+        Runnable agregarCampoTelefono = () -> {
+            JTextField nuevoTel = new JTextField();
+            JButton btnEliminar = new JButton("X");
+            btnEliminar.setMargin(new Insets(2, 6, 2, 6));
+            JPanel filaTel = new JPanel(new BorderLayout(5, 0));
+            filaTel.add(nuevoTel, BorderLayout.CENTER);
+            filaTel.add(btnEliminar, BorderLayout.EAST);
+            telefonosFields.add(nuevoTel);
+            panelTelefonos.add(filaTel);
+            btnEliminar.addActionListener(ev -> {
+                panelTelefonos.remove(filaTel);
+                telefonosFields.remove(nuevoTel);
+                panelTelefonos.revalidate();
+                panelTelefonos.repaint();
+            });
+            panelTelefonos.revalidate();
+            panelTelefonos.repaint();
+        };
+
+        JButton btnAgregarTelefono = new JButton("Agregar Teléfono");
+        btnAgregarTelefono.addActionListener(ev -> agregarCampoTelefono.run());
+
+        // Cargar teléfonos actuales
+        if (telefonosActuales.isEmpty()) {
+            agregarCampoTelefono.run();
+        } else {
+            for (String tel : telefonosActuales) {
+                JTextField tf = new JTextField(tel);
+                JButton btnEliminar = new JButton("X");
+                btnEliminar.setMargin(new Insets(2, 6, 2, 6));
+                JPanel filaTel = new JPanel(new BorderLayout(5, 0));
+                filaTel.add(tf, BorderLayout.CENTER);
+                filaTel.add(btnEliminar, BorderLayout.EAST);
+                telefonosFields.add(tf);
+                panelTelefonos.add(filaTel);
+                btnEliminar.addActionListener(ev -> {
+                    panelTelefonos.remove(filaTel);
+                    telefonosFields.remove(tf);
+                    panelTelefonos.revalidate();
+                    panelTelefonos.repaint();
+                });
+            }
+        }
 
         Object[] campos;
         if (esEmpresa) {
@@ -334,7 +443,8 @@ public class ClientesPanel extends JPanel {
                     "Nombre:", nombre,
                     "RUC:", ruc,
                     "Dirección:", direccion,
-                    "Teléfono:", telefono,
+                    "Teléfonos:", panelTelefonos,
+                    btnAgregarTelefono,
                     "Observaciones:", obs
             };
         } else {
@@ -344,7 +454,8 @@ public class ClientesPanel extends JPanel {
                     "Apellido Materno:", apeM,
                     "RUC/DNI:", ruc,
                     "Dirección:", direccion,
-                    "Teléfono:", telefono,
+                    "Teléfonos:", panelTelefonos,
+                    btnAgregarTelefono,
                     "Observaciones:", obs
             };
         }
@@ -356,8 +467,15 @@ public class ClientesPanel extends JPanel {
             String apeMTxt = esEmpresa ? null : apeM.getText().trim();
             String rucTxt = ruc.getText().trim();
             String dirTxt = direccion.getText().trim();
-            String telTxt = telefono.getText().trim();
             String obsTxt = obs.getText().trim();
+
+            // Recolectar teléfonos
+            java.util.List<String> telefonos = new java.util.ArrayList<>();
+            for (JTextField tf : telefonosFields) {
+                String tel = tf.getText().trim();
+                if (!tel.isEmpty())
+                    telefonos.add(tel);
+            }
 
             // Validación
             if (nombreTxt.isEmpty()) {
@@ -388,7 +506,7 @@ public class ClientesPanel extends JPanel {
                         apeMTxt,
                         rucTxt.isEmpty() ? null : rucTxt,
                         obsTxt);
-                // Actualizar dirección y teléfono si se ingresaron
+                // Actualizar dirección si se ingresó
                 if (!dirTxt.isEmpty()) {
                     try (java.sql.Connection conn = dataBase.DatabaseConnection.getConnection();
                             java.sql.CallableStatement cs = conn.prepareCall("CALL SP_AGREGAR_DIR_CLIENTE(?, ?)")) {
@@ -397,17 +515,21 @@ public class ClientesPanel extends JPanel {
                         cs.execute();
                     }
                 }
-                if (!telTxt.isEmpty()) {
-                    try (java.sql.Connection conn = dataBase.DatabaseConnection.getConnection();
-                            java.sql.CallableStatement cs = conn.prepareCall("CALL SP_AGREGAR_TEL_CLIENTE(?, ?)")) {
-                        cs.setInt(1, Integer.parseInt(id));
-                        cs.setString(2, telTxt);
-                        cs.execute();
-                    }
+                // Actualizar teléfonos (uno o varios)
+                try (java.sql.Connection conn = dataBase.DatabaseConnection.getConnection();
+                        java.sql.CallableStatement cs = conn.prepareCall("CALL SP_MODIFICAR_TELEFONO_CLIENTE(?, ?)")) {
+                    cs.setInt(1, Integer.parseInt(id));
+                    cs.setArray(2, conn.createArrayOf("text", telefonos.toArray()));
+                    cs.execute();
                 }
                 cargarClientes();
             } catch (SQLException ex) {
-                JOptionPane.showMessageDialog(this, "Error al modificar cliente: " + ex.getMessage());
+                // Solo muestra la primera línea del mensaje de error
+                String msg = ex.getMessage();
+                if (msg != null && msg.contains("\n")) {
+                    msg = msg.substring(0, msg.indexOf('\n'));
+                }
+                JOptionPane.showMessageDialog(this, "Error al modificar cliente: " + msg);
             }
         }
     }
