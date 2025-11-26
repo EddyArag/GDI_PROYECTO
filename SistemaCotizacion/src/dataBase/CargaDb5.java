@@ -77,6 +77,9 @@ public class CargaDb5 {
                             // Solo muestra el mensaje personalizado, sin SQLERRM ni contexto
                             "RAISE; " +
                             "END; $$;");
+                st.executeUpdate(
+                        "CREATE OR REPLACE PROCEDURE SP_ELIMINAR_TEL_CLIENTE(IN p_id_telcli INT, IN p_id_cli INT) " +
+                        "LANGUAGE sql AS $$ DELETE FROM Telefono_Cli WHERE ID_TELCLI = p_id_telcli AND ID_CLI = p_id_cli; $$;");
             // ... SERVICIO_PRODUCTO
             st.executeUpdate(
                     "CREATE OR REPLACE PROCEDURE SP_INSERTAR_PRODUCTO(" +
